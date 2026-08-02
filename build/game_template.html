@@ -1,0 +1,850 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Promptle — ICAIRE AI Glossary Game</title>
+<style>
+  :root {
+    --bg:#e8edf3; --surface:#fff; --surface-2:#f1f4f8; --ink:#0e2841; --ink-soft:#3d5673;
+    --muted:#6b7d92; --line:#bfcbda; --correct:#4ea72e; --present:#c9862b; --absent:#6d7c8d;
+    --key:#bdc9d8; --key-ink:#0e2841; --key-spent:#3d4854; --key-spent-ink:#c4ccd4;
+    --accent:#196b24; --tile-filled:#8195ab; --shadow:0 10px 40px rgba(14,40,65,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#081a2c; --surface:#0e2841; --surface-2:#12324c; --ink:#eaf1f8; --ink-soft:#a9bccf;
+      --muted:#7f95ab; --line:#1e3f5c; --correct:#4ea72e; --present:#d0902f; --absent:#3a4e62;
+      --key:#2d4d6b; --key-ink:#eaf1f8; --key-spent:#0b1622; --key-spent-ink:#61748a;
+      --accent:#8bc34a; --tile-filled:#365a7c; --shadow:0 14px 50px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#e8edf3; --surface:#fff; --surface-2:#f1f4f8; --ink:#0e2841; --ink-soft:#3d5673;
+    --muted:#6b7d92; --line:#bfcbda; --correct:#4ea72e; --present:#c9862b; --absent:#6d7c8d;
+    --key:#bdc9d8; --key-ink:#0e2841; --key-spent:#3d4854; --key-spent-ink:#c4ccd4;
+    --accent:#196b24; --tile-filled:#8195ab; --shadow:0 10px 40px rgba(14,40,65,.12);
+  }
+  :root[data-theme="dark"] {
+    --bg:#081a2c; --surface:#0e2841; --surface-2:#12324c; --ink:#eaf1f8; --ink-soft:#a9bccf;
+    --muted:#7f95ab; --line:#1e3f5c; --correct:#4ea72e; --present:#d0902f; --absent:#3a4e62;
+    --key:#2d4d6b; --key-ink:#eaf1f8; --key-spent:#0b1622; --key-spent-ink:#61748a;
+    --accent:#8bc34a; --tile-filled:#365a7c; --shadow:0 14px 50px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body {
+    background:var(--bg); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    height:100%; overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  .wrap { height:100%; max-width:520px; margin:0 auto; padding:10px 14px 40px;
+    display:flex; flex-direction:column; gap:9px; justify-content:flex-start; }
+
+  /* ---- header: 2 icons left, centered title, 2 icons right ---- */
+  header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:2px; }
+  .tools-l, .tools-r { display:flex; gap:6px; flex:0 0 auto; }
+  .title-wrap { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px; }
+  header h1 { margin:0; font-family:"Trebuchet MS",system-ui,sans-serif; font-size:25px; font-weight:800;
+    letter-spacing:.02em; color:var(--ink); line-height:1; text-transform:none; white-space:nowrap; }
+  header .sub { font-size:11px; color:var(--muted); white-space:nowrap; }
+  .icon-btn {
+    border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    width:34px; height:34px; border-radius:9px; cursor:pointer;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center;
+    line-height:1; padding:0; transition:transform .12s, background .2s;
+  }
+  .icon-btn:hover { background:var(--surface-2); }
+  .icon-btn:active { transform:scale(.94); }
+  .icon-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  #langBtn { font-size:18px; }
+  .hint-btn { font-size:17px; animation:glow 2.1s ease-in-out infinite; }
+  .hint-btn.spent { animation:none; opacity:.4; cursor:default; }
+  @keyframes glow {
+    0%,100% { box-shadow:0 0 0 0 rgba(78,167,46,0); border-color:var(--line); }
+    50% { box-shadow:0 0 12px 2px rgba(78,167,46,.5); border-color:var(--correct); }
+  }
+
+  /* ---- clue ---- */
+  .clue { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:9px 13px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:4px; }
+  .clue .lbl { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:10px; letter-spacing:.16em; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .clue .lbl .len { background:var(--accent); color:var(--surface); padding:2px 8px; border-radius:20px; letter-spacing:.06em; font-size:9.5px; }
+  .clue .lbl .len.practice { background:var(--present); }   /* amber: you are NOT on the daily word */
+  .clue p { margin:0; font-size:14.5px; line-height:1.35; color:var(--ink); font-weight:500; }
+  .clue p.rtl { direction:rtl; text-align:right; font-size:16px; }
+
+  .msg { min-height:16px; text-align:center; font-size:12.5px; font-weight:600; color:var(--ink-soft); }
+  .msg.flash { color:var(--present); }
+
+  /* ---- board ---- */
+  .board { display:flex; flex-direction:column; gap:6px; align-items:center; margin-top:2px; }
+  .row { display:flex; gap:6px; }
+  .tile { border-radius:8px; border:2px solid var(--line); display:grid; place-items:center; font-weight:800; text-transform:uppercase; color:var(--ink); background:transparent; user-select:none; }
+  .tile.filled { border-color:var(--tile-filled); animation:pop .1s ease; }
+  .tile.correct { background:var(--correct); border-color:var(--correct); color:#fff; }
+  .tile.present { background:var(--present); border-color:var(--present); color:#fff; }
+  .tile.absent { background:var(--absent); border-color:var(--absent); color:#fff; }
+  .tile.reveal { animation:flip .5s ease forwards; }
+  .row.shake { animation:shake .5s; }
+  @keyframes pop { 0%{transform:scale(.9);} 100%{transform:scale(1);} }
+  @keyframes flip { 0%{transform:rotateX(0);} 50%{transform:rotateX(90deg);} 100%{transform:rotateX(0);} }
+  @keyframes shake { 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);} 30%,50%,70%{transform:translateX(-6px);} 40%,60%{transform:translateX(6px);} }
+
+  /* ---- keyboard ---- */
+  /* margin-top:auto pushes the keyboard down into the slack, away from the board;
+     .wrap's bottom padding keeps it off the very bottom edge. */
+  .kb { display:flex; flex-direction:column; gap:5px; margin-top:auto; }
+  .kb-row { display:flex; gap:4px; justify-content:center; }
+  .key { flex:1; min-width:0; height:46px; border-radius:7px; border:none; background:var(--key); color:var(--key-ink); font-size:14px; font-weight:700; text-transform:uppercase; cursor:pointer; display:grid; place-items:center; transition:transform .1s, filter .2s, background .3s; }
+  .key.wide { flex:1.4; font-size:11px; }
+  .key:hover { filter:brightness(1.06); }
+  .key:active { transform:translateY(1px); }
+  .key.correct { background:var(--correct); color:#fff; }
+  .key.present { background:var(--present); color:#fff; }
+  .key.absent { background:var(--key-spent); color:var(--key-spent-ink); }
+
+  /* ---- result ---- */
+  .result { position:absolute; inset:0; margin:auto; height:max-content; max-width:400px; z-index:20;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; box-shadow:var(--shadow);
+    display:none; flex-direction:column; gap:9px; }
+  .result.show { display:flex; }
+  .result .verdict { font-size:12.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+  .result .verdict.win { color:var(--correct); }
+  .result .verdict.lose { color:var(--present); }
+  .result .term-row { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .result .term { font-size:26px; font-weight:800; color:var(--ink); }
+  .result .rtr { font-size:13px; font-weight:600; color:var(--accent); }
+  .result .def { font-size:13.5px; line-height:1.45; color:var(--ink-soft); margin:0; }
+  /* .result already inherits direction:rtl from .wrap, so a flex row is laid out
+     right-to-left on its own — adding row-reverse here would flip it back. */
+  .result.rtl .term, .result.rtl .def, .result.rtl .rtr { direction:rtl; text-align:right; }
+  .result .again { margin-top:3px; align-self:flex-start; background:var(--accent); color:var(--surface); border:none; border-radius:10px; padding:10px 20px; font-size:13.5px; font-weight:700; cursor:pointer; }
+  .result .again:hover { filter:brightness(1.08); }
+  .result .again.locked { background:var(--surface-2); color:var(--muted); cursor:default; filter:none; }
+
+  /* share-the-game + dismiss, in the card's corner */
+  .rtools { position:absolute; top:9px; right:10px; display:flex; gap:2px; }
+  .result.rtl .rtools { right:auto; left:10px; }
+  .rbtn { width:26px; height:26px; border-radius:7px; border:none; background:transparent;
+    color:var(--muted); font-size:19px; line-height:1; cursor:pointer;
+    display:grid; place-items:center; padding:0; }
+  .rbtn:hover { background:var(--surface-2); color:var(--ink); }
+  .rbtn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .rbtn svg { display:block; }
+  .result .verdict { padding-inline-end:58px; }
+
+  /* stats strip */
+  .stats { display:flex; gap:6px; margin-top:2px; }
+  .stats div { flex:1; background:var(--surface-2); border-radius:9px; padding:7px 4px; text-align:center; }
+  .stats b { display:block; font-size:19px; font-weight:800; color:var(--ink); line-height:1.15; }
+  .stats span { font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .result.rtl .stats span { text-transform:none; letter-spacing:0; font-size:10.5px; }
+
+  .resbtn { margin-top:4px; width:100%; background:var(--accent); color:var(--surface); border:none;
+    border-radius:10px; padding:11px; font-size:13.5px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    text-decoration:none; text-align:center; }
+  .resbtn:hover { filter:brightness(1.08); }
+  .resbtn:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+
+  /* ---- how-to-play modal ---- */
+  .overlay { position:fixed; inset:0; background:rgba(14,40,65,.5); backdrop-filter:blur(2px); z-index:30;
+    display:none; align-items:center; justify-content:center; padding:18px; }
+  .overlay.show { display:flex; }
+  .modal { background:var(--surface); color:var(--ink); border-radius:16px; padding:20px 20px 18px; max-width:380px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.4); }
+  .modal.rtl { direction:rtl; text-align:right; }
+  .modal h2 { margin:0 0 10px; font-family:"Trebuchet MS",system-ui,sans-serif; font-size:20px; font-weight:800; color:var(--ink); }
+  .modal ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; }
+  .modal li { font-size:13.5px; line-height:1.4; color:var(--ink-soft); display:flex; gap:9px; align-items:flex-start; }
+  .modal .sw { flex:0 0 auto; width:16px; height:16px; border-radius:4px; margin-top:1px; }
+  .modal .sw.g { background:var(--correct); } .modal .sw.a { background:var(--present); } .modal .sw.n { background:var(--absent); }
+  .modal .dot { flex:0 0 auto; color:var(--accent); font-weight:900; }
+  .modal .ok { margin-top:15px; width:100%; background:var(--accent); color:var(--surface); border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:700; cursor:pointer; }
+  .modal .ok:hover { filter:brightness(1.08); }
+  .modal .ok:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+
+  /* Mobile: tile size here is limited by WIDTH (7 tiles across ~375px), never by height —
+     so the only way to make the squares bigger is to claw back horizontal space. Trimming
+     the page padding and the inter-tile gaps is worth ~4px per tile. */
+  @media (max-width: 480px) {
+    .wrap { padding-left:6px; padding-right:6px; }
+    .board, .row { gap:4px; }
+    .kb { gap:4px; }
+    .kb-row { gap:3px; }
+    .key { height:44px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile.filled, .tile.reveal, .row.shake, .hint-btn { animation:none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="tools-l">
+      <button class="icon-btn" id="langBtn" title="Language" aria-label="Language">ع</button>
+      <button class="icon-btn" id="helpBtn" title="How to play" aria-label="How to play">?</button>
+    </div>
+    <div class="title-wrap">
+      <h1 id="title">Promptle</h1>
+      <span class="sub" id="sub">Guess the AI term in 6 tries</span>
+    </div>
+    <div class="tools-r">
+      <button class="icon-btn hint-btn" id="hintBtn" title="Hint" aria-label="Hint">💡</button>
+      <button class="icon-btn" id="statsBtn" title="Show result" aria-label="Show result" style="display:none"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="currentColor"><rect x="1.5" y="8" width="3.4" height="6" rx="1.1"/><rect x="6.3" y="2" width="3.4" height="12" rx="1.1"/><rect x="11.1" y="5.5" width="3.4" height="8.5" rx="1.1"/></svg></button>
+      <button class="icon-btn" id="themeBtn" title="Light / dark" aria-label="Theme">◐</button>
+    </div>
+  </header>
+
+  <div class="clue">
+    <span class="lbl"><span id="defLabel">DEFINITION</span> <span class="len" id="lenBadge">5-LETTER WORD</span> <span class="len practice" id="practiceBadge" style="display:none">PRACTICE</span></span>
+    <p id="clue">—</p>
+  </div>
+
+  <div class="msg" id="msg" aria-live="polite"></div>
+
+  <div class="board" id="board" aria-label="board"></div>
+
+  <div class="kb" id="kb" aria-label="keyboard"></div>
+
+  <div class="result" id="result" role="status">
+    <div class="rtools">
+      <button class="rbtn" id="rShare" title="Share the game" aria-label="Share the game"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11.8" cy="3.6" r="2"/><circle cx="4.2" cy="8" r="2"/><circle cx="11.8" cy="12.4" r="2"/><path d="M6 6.9 10 4.7M6 9.1l4 2.2"/></svg></button>
+      <button class="rbtn" id="rClose" title="Hide" aria-label="Hide result">×</button>
+    </div>
+    <span class="verdict" id="verdict"></span>
+    <div class="term-row"><span class="term" id="rTerm"></span><span class="rtr" id="rTr"></span></div>
+    <p class="def" id="rDef"></p>
+    <div class="stats" id="stats">
+      <div><b id="sPlayed">0</b><span id="lPlayed">Played</span></div>
+      <div><b id="sWin">0</b><span id="lWin">Win %</span></div>
+      <div><b id="sStreak">0</b><span id="lStreak">Streak</span></div>
+      <div><b id="sMax">0</b><span id="lMax">Max</span></div>
+    </div>
+    <button class="resbtn" id="nextBtn" style="display:none">Next word</button>
+    <a class="resbtn" id="learnBtn" href="#" target="_blank" rel="noopener noreferrer">Read the full glossary entry</a>
+  </div>
+</div>
+
+<!-- how to play -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <h2 id="mTitle">How to play</h2>
+    <ul id="mList"></ul>
+    <button class="ok" id="okBtn">Got it</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var EN_WORDS = {
+__EN_WORDS__
+  };
+  var AR_WORDS = {
+__AR_WORDS__
+  };
+  var EN_DICT = new Set("__EN_DICT__".split(" "));
+  var AR_DICT = new Set("__AR_DICT__".split(" "));
+
+  var AR_NORM = { "أ":"ا","إ":"ا","آ":"ا","ٱ":"ا","ة":"ه","ى":"ي","ؤ":"و","ئ":"ي" };
+
+  var BANKS = {
+    en: {
+      words: EN_WORDS, dict: EN_DICT, dir: "ltr",
+      kb: [
+        ["Q","W","E","R","T","Y","U","I","O","P"],
+        ["A","S","D","F","G","H","J","K","L"],
+        ["Backspace","Z","X","C","V","B","N","M","Enter"]
+      ],
+      ui: {
+        name: "Promptle",
+        sub: "Guess the AI term in 6 tries",
+        defLabel: "DEFINITION",
+        len: function (n) { return n + "-LETTER WORD"; },
+        need: function (n) { return "Type a " + n + "-letter word"; },
+        notTerm: "Not in the word list",
+        hint: "Hint: one letter is in the word",
+        hintNone: "You already know every letter — no hint left to give",
+        win: "Solved it ✓", lose: "Out of tries", cheer: "🎉 Nailed it!", trLabel: "In Arabic",
+        toggle: "ع",
+        learn: "Read the full glossary entry →",
+        next: "Next word ↻", keep: "Play more words ↻", practice: "PRACTICE",
+        shareTitle: "Promptle — the daily AI glossary game",
+        shareBlurb: "Promptle — guess the hidden AI term. A daily bilingual word game built on the ICAIRE AI Glossary.",
+        stats: { played: "Played", win: "Win %", streak: "Streak", max: "Max" },
+        howTitle: "How to play",
+        how: [
+          { dot: true, t: "One puzzle a day — guess the hidden AI term in 6 tries." },
+          { dot: true, t: "Every guess must be a real word of the shown length — read the definition clue above the board." },
+          { sw: "g", t: "Green = right letter, right spot." },
+          { sw: "a", t: "Amber = in the word, wrong spot." },
+          { sw: "n", t: "Grey = not in the word." },
+          { dot: true, t: "Tap 💡 once for a hint, ع to switch language, ? to see this again. Come back tomorrow for a new word." }
+        ],
+        ok: "Got it"
+      }
+    },
+    ar: {
+      words: AR_WORDS, dict: AR_DICT, dir: "rtl",
+      kb: [
+        // Arabic 101 (the standard PC layout), so the muscle memory matches a real keyboard:
+        //   row1 = Q..P + [ ]   row2 = A..L + ; '   row3 = Z..M + , . /
+        // ذ sits on the backtick key on a physical board, which has no place in a 3-row
+        // on-screen grid — it goes at the end of row 3 (words like نموذج still need it).
+        ["ض","ص","ث","ق","ف","غ","ع","ه","خ","ح","ج","د"],
+        ["ش","س","ي","ب","ل","ا","ت","ن","م","ك","ط"],
+        ["Backspace","ئ","ء","ؤ","ر","ى","ة","و","ز","ظ","ذ","Enter"]
+      ],
+      ui: {
+        name: "خمِّن",
+        sub: "خمّن مصطلح الذكاء الاصطناعي في 6 محاولات",
+        defLabel: "التعريف",
+        len: function (n) { return "كلمة من " + n + " أحرف"; },
+        need: function (n) { return "اكتب كلمة من " + n + " أحرف"; },
+        notTerm: "ليست كلمة معروفة",
+        hint: "تلميح: أحد الأحرف موجود في الكلمة",
+        hintNone: "تعرف جميع الأحرف بالفعل — لا يوجد تلميح جديد",
+        win: "أحسنت ✓", lose: "انتهت المحاولات", cheer: "🎉 أحسنت!", trLabel: "بالإنجليزية",
+        toggle: "EN",
+        learn: "← اقرأ التعريف الكامل في المعجم",
+        next: "↻ كلمة جديدة", keep: "↻ العب المزيد من الكلمات", practice: "تدريب",
+        shareTitle: "خمِّن — لعبة مصطلحات الذكاء الاصطناعي اليومية",
+        shareBlurb: "خمِّن — احزر مصطلح الذكاء الاصطناعي المخفي. لعبة كلمات يومية ثنائية اللغة مبنية على معجم إيكير للذكاء الاصطناعي.",
+        stats: { played: "لعبت", win: "٪ الفوز", streak: "المتتالية", max: "الأفضل" },
+        howTitle: "طريقة اللعب",
+        how: [
+          { dot: true, t: "لغز واحد كل يوم — خمّن مصطلح الذكاء الاصطناعي المخفي في 6 محاولات." },
+          { dot: true, t: "كل تخمين يجب أن يكون كلمة حقيقية بعدد الأحرف المطلوب — استعن بالتعريف فوق اللوحة." },
+          { sw: "g", t: "أخضر = الحرف صحيح وفي مكانه الصحيح." },
+          { sw: "a", t: "برتقالي = الحرف موجود لكن في مكان آخر." },
+          { sw: "n", t: "رمادي = الحرف غير موجود في الكلمة." },
+          { dot: true, t: "اضغط 💡 مرة واحدة للتلميح، وEN لتغيير اللغة، و؟ لعرض هذه التعليمات. عُد غدًا لكلمة جديدة." }
+        ],
+        ok: "فهمت"
+      }
+    }
+  };
+
+  // Practice mode frees the once-a-day lock so the game can be played back to back. It picks a
+  // random word instead of the date-derived one, never reads or writes the day's saved state,
+  // and never touches the stats — so benchmarking cannot pollute a real streak.
+  // Entered two ways: ?practice=1 / #practice for direct testing, OR the "Play more words"
+  // button on the result card. The button matters for shared links: a published artifact runs
+  // in a frame, so a query string on the page URL never reaches this script, and nobody you
+  // share with should have to remember a URL parameter.
+  var practice = /[?&]practice=1\b/.test(location.search) || location.hash === "#practice";
+
+  var lang = "en";
+  function B() { return BANKS[lang]; }
+  function WORDS() { return B().words; }
+  function normChar(c) { return lang === "ar" ? (AR_NORM[c] || c) : c; }
+  function normWord(s) { var o = ""; for (var i = 0; i < s.length; i++) o += normChar(s[i]); return o; }
+  function isValidGuess(g) { return B().dict.has(normWord(g)); }
+
+  var ROWS = 6;
+  var answer = "", cols = 5, curRow = 0, grid = [], over = false, hintUsed = false;
+  var keyEls = {}, keyState = {};
+
+  var board = document.getElementById("board");
+  var kbEl = document.getElementById("kb");
+  var msgEl = document.getElementById("msg");
+  var clueEl = document.getElementById("clue");
+  var lenBadge = document.getElementById("lenBadge");
+  var defLabel = document.getElementById("defLabel");
+  var subEl = document.getElementById("sub");
+  var resultEl = document.getElementById("result");
+  var hintBtn = document.getElementById("hintBtn");
+  var statsBtn = document.getElementById("statsBtn");
+  var learnBtn = document.getElementById("learnBtn");
+  var nextBtn = document.getElementById("nextBtn");
+  var rShare = document.getElementById("rShare");
+  var langBtn = document.getElementById("langBtn");
+  var overlay = document.getElementById("overlay");
+  var wrapEl = document.querySelector(".wrap");
+  var headerEl = document.querySelector("header");
+  var clueBox = document.querySelector(".clue");
+
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } }
+
+  // Tiles are sized from MEASURED space, not a guessed budget, so the board uses every pixel
+  // actually free and its outer edges line up with the clue card and the keyboard above and
+  // below it (they all sit in the same .wrap content box).
+  function tileSize() {
+    var cs = getComputedStyle(wrapEl);
+    var padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    var padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    var gap = parseFloat(cs.rowGap) || 9;               // .wrap's flex gap
+    // read the real gap rather than hardcoding it — the mobile media query shrinks it
+    var TILE_GAP = parseFloat(getComputedStyle(board).rowGap) || 6;
+
+    // width: the exact content width the keyboard rows span, so the board matches it.
+    // Guard against a zero/absurd measurement — this runs while the game is still hidden
+    // inside the demo drawer's iframe, and a truthy-but-tiny clientWidth would otherwise
+    // lock the board at the 28px minimum until something forced a resize.
+    var innerW = wrapEl.clientWidth - padX;
+    if (!(innerW > 120)) innerW = 492;
+    var byW = (innerW - TILE_GAP * (cols - 1)) / cols;
+
+    // height: whatever is left after the real chrome (header + clue + message + keyboard
+    // + the four .wrap gaps), rather than assuming a fixed ~430px
+    var chrome = headerEl.offsetHeight + clueBox.offsetHeight + msgEl.offsetHeight +
+                 kbEl.offsetHeight + gap * 4 + 4;       // +4 = .board margin-top and slack
+    var wrapH = wrapEl.clientHeight;
+    if (!(wrapH > 200)) wrapH = 640;
+    var innerH = wrapH - padY - chrome;
+    var byH = (innerH - TILE_GAP * (ROWS - 1)) / ROWS;
+
+    return Math.max(28, Math.min(96, Math.floor(Math.min(byW, byH))));
+  }
+
+  function buildBoard() {
+    board.innerHTML = ""; board.style.direction = B().dir; grid = [];
+    var size = tileSize(), fs = Math.round(size * 0.46);
+    for (var r = 0; r < ROWS; r++) {
+      var row = document.createElement("div"); row.className = "row"; var cells = [];
+      for (var c = 0; c < cols; c++) {
+        var t = document.createElement("div"); t.className = "tile";
+        t.style.width = size + "px"; t.style.height = size + "px"; t.style.fontSize = fs + "px";
+        row.appendChild(t); cells.push(t);
+      }
+      board.appendChild(row); grid.push({ el: row, cells: cells });
+    }
+  }
+
+  function buildKeyboard() {
+    kbEl.innerHTML = ""; keyEls = {};
+    B().kb.forEach(function (line) {
+      // The keyboard mimics a PHYSICAL Arabic 101 board, which is laid out left-to-right:
+      // ض is printed on the Q key, so it belongs at the far LEFT. Inheriting the RTL
+      // direction used by the board would mirror every row. Only the board is RTL.
+      var row = document.createElement("div"); row.className = "kb-row"; row.style.direction = "ltr";
+      line.forEach(function (tok) {
+        var b = document.createElement("button"); b.className = "key";
+        if (tok === "Enter") { b.classList.add("wide"); b.textContent = (lang === "ar" ? "↵" : "Enter"); b.dataset.key = "Enter"; }
+        else if (tok === "Backspace") { b.classList.add("wide"); b.textContent = "⌫"; b.dataset.key = "Backspace"; }
+        else { b.textContent = tok; b.dataset.key = tok; keyEls[normChar(tok)] = b; }
+        b.addEventListener("click", function () { handleKey(b.dataset.key); });
+        row.appendChild(b);
+      });
+      kbEl.appendChild(row);
+    });
+  }
+
+  function applyStaticUI() {
+    var ui = B().ui;
+    document.querySelector(".wrap").dir = B().dir;   // whole layout LTR / RTL
+    document.getElementById("title").textContent = ui.name;
+    subEl.textContent = ui.sub;
+    defLabel.textContent = ui.defLabel;
+    langBtn.textContent = ui.toggle;
+    clueEl.className = (lang === "ar" ? "rtl" : "");
+    var pb = document.getElementById("practiceBadge");
+    pb.textContent = ui.practice;
+    pb.style.display = practice ? "" : "none";
+  }
+
+  // hide the answer word if it appears inside its own definition
+  function stripDiac(s) { return s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, ""); }
+  function canon(s) { return lang === "en" ? s.toUpperCase() : normWord(stripDiac(s)); }
+  function censorClue(def, ans) {
+    var target = canon(ans);
+    return def.split(/(\s+)/).map(function (tok) {
+      var bare = tok.replace(/[^A-Za-z\u0621-\u064A\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "");
+      return (bare && canon(bare) === target) ? "▁▁▁▁" : tok;
+    }).join("");
+  }
+
+  // ---- once-a-day lock: one deterministic word per language, saved across refreshes ----
+  function dayNumber() {
+    var d = new Date();
+    var today = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    return Math.floor((today - Date.UTC(2026, 0, 1)) / 86400000);
+  }
+  function storeKey() {
+    var d = new Date();
+    return "promptle." + d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + "." + lang;
+  }
+  function loadState() { try { return JSON.parse(localStorage.getItem(storeKey())); } catch (e) { return null; } }
+  function saveState() { if (practice) return; try { localStorage.setItem(storeKey(), JSON.stringify(state)); } catch (e) {} }
+  var state = { guesses: [], done: false, won: false, counted: false };
+
+  // ---- lifetime stats, kept per language (the two puzzles are independent) ----
+  function statsKey() { return "promptle.stats." + lang; }
+  function loadStats() {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem(statsKey())); } catch (e) {}
+    if (!s || typeof s !== "object") s = {};
+    return { played: s.played || 0, wins: s.wins || 0, streak: s.streak || 0,
+             max: s.max || 0, last: (typeof s.last === "number") ? s.last : null };
+  }
+  function saveStats(s) { try { localStorage.setItem(statsKey(), JSON.stringify(s)); } catch (e) {} }
+
+  // Called once, at the moment a puzzle is completed. state.counted is persisted with the
+  // day's state, so reloading a finished puzzle re-shows the card without re-counting it.
+  function recordResult(won) {
+    if (practice) return;          // benchmarking must not inflate played / streak
+    if (state.counted) return;
+    state.counted = true;
+    var s = loadStats(), d = dayNumber();
+    if (s.last === d) { saveState(); return; }   // belt & braces: never count a day twice
+    s.played++;
+    if (won) {
+      s.streak = (s.last === d - 1) ? s.streak + 1 : 1;
+      s.wins++;
+      if (s.streak > s.max) s.max = s.streak;
+    } else { s.streak = 0; }
+    s.last = d;
+    saveStats(s); saveState();
+  }
+
+  function renderStats() {
+    var s = loadStats(), L = B().ui.stats;
+    document.getElementById("sPlayed").textContent = s.played;
+    document.getElementById("sWin").textContent = s.played ? Math.round(s.wins / s.played * 100) : 0;
+    document.getElementById("sStreak").textContent = s.streak;
+    document.getElementById("sMax").textContent = s.max;
+    document.getElementById("lPlayed").textContent = L.played;
+    document.getElementById("lWin").textContent = L.win;
+    document.getElementById("lStreak").textContent = L.streak;
+    document.getElementById("lMax").textContent = L.max;
+  }
+
+  function pickAnswer(keys) {
+    if (!practice) return keys[dayNumber() % keys.length];   // same word for everyone, once per day
+    var k = keys[Math.floor(Math.random() * keys.length)];
+    return (keys.length > 1 && k === answer) ? pickAnswer(keys) : k;   // no immediate repeat
+  }
+
+  function loadDay() {
+    var w = WORDS();
+    var keys = Object.keys(w).sort();
+    answer = pickAnswer(keys);
+    cols = answer.length;
+    curRow = 0; over = false; hintUsed = false; keyState = {};
+    buildBoard();
+    Object.keys(keyEls).forEach(function (k) { keyEls[k].className = "key"; });
+    clueEl.textContent = censorClue(w[answer].def, answer);
+    lenBadge.textContent = B().ui.len(cols);
+    resultEl.className = "result";
+    hintBtn.classList.remove("spent"); hintBtn.disabled = false;
+    hintBtn.style.display = ""; statsBtn.style.display = "none";
+    resetCardBtns();
+    setMsg("");
+    // restore today's progress for this language (practice always starts clean)
+    state = (practice ? null : loadState()) || { guesses: [], done: false, won: false, counted: false, hint: null };
+    state.guesses.forEach(function (g) { replayGuess(g); });
+    // one hint per game, not per page load — restore the revealed letter and keep it spent
+    if (state.hint) { updateKey(state.hint, "correct"); hintUsed = true; hintBtn.classList.add("spent"); hintBtn.disabled = true; }
+    if (state.done) { over = true; hintBtn.classList.add("spent"); hintBtn.disabled = true; finish(state.won); }
+  }
+
+  function replayGuess(guess) {
+    for (var i = 0; i < cols; i++) { grid[curRow].cells[i].textContent = guess[i]; }
+    var score = scoreGuess(guess, answer);
+    for (var j = 0; j < cols; j++) { grid[curRow].cells[j].classList.add(score[j]); updateKey(guess[j], score[j]); }
+    if (normWord(guess) !== normWord(answer)) curRow++;
+  }
+
+  function setMsg(text, flash) { msgEl.textContent = text; msgEl.className = flash ? "msg flash" : "msg"; }
+
+  function acceptChar(k) {
+    if (lang === "en") { return /^[A-Za-z]$/.test(k) ? k.toUpperCase() : null; }
+    return /^[ء-ي]$/.test(k) ? k : null;
+  }
+  function handleKey(k) {
+    if (over) return;
+    if (k === "Enter") return submit();
+    if (k === "Backspace") return del();
+    var ch = acceptChar(k); if (ch) type(ch);
+  }
+
+  function nextEmptyCol(r) { for (var c = 0; c < cols; c++) { if (grid[r].cells[c].textContent === "") return c; } return -1; }
+  function lastTypedCol(r) { for (var c = cols - 1; c >= 0; c--) { if (grid[r].cells[c].textContent !== "") return c; } return -1; }
+  function rowFull(r) { return nextEmptyCol(r) === -1; }
+
+  function type(ch) { var c = nextEmptyCol(curRow); if (c < 0) return; var cell = grid[curRow].cells[c]; cell.textContent = ch; cell.classList.add("filled"); setMsg(""); }
+  function del() { var c = lastTypedCol(curRow); if (c < 0) return; var cell = grid[curRow].cells[c]; cell.textContent = ""; cell.classList.remove("filled"); }
+  function currentGuess() { return grid[curRow].cells.map(function (c) { return c.textContent; }).join(""); }
+
+  function submit() {
+    if (!rowFull(curRow)) { shakeRow(); setMsg(B().ui.need(cols), true); return; }
+    var guess = currentGuess();
+    if (!isValidGuess(guess)) { shakeRow(); setMsg(B().ui.notTerm, true); return; }
+    var score = scoreGuess(guess, answer);
+    paintRow(curRow, guess, score);
+    state.guesses.push(guess);
+    if (normWord(guess) === normWord(answer)) {
+      over = true; state.done = true; state.won = true; recordResult(true);
+      setTimeout(function () { finish(true); }, cols * 240 + 250); return;
+    }
+    curRow++;
+    if (curRow >= ROWS) { over = true; state.done = true; state.won = false; recordResult(false); setTimeout(function () { finish(false); }, cols * 240 + 250); }
+    else { saveState(); }
+  }
+
+  function scoreGuess(guess, ans) {
+    var res = new Array(cols).fill("absent");
+    var pool = ans.split("").map(normChar);
+    var g = guess.split("").map(normChar);
+    for (var i = 0; i < cols; i++) { if (g[i] === pool[i]) { res[i] = "correct"; pool[i] = null; } }
+    for (var j = 0; j < cols; j++) { if (res[j] === "correct") continue; var idx = pool.indexOf(g[j]); if (idx > -1) { res[j] = "present"; pool[idx] = null; } }
+    return res;
+  }
+
+  function paintRow(r, guess, score) {
+    var cells = grid[r].cells;
+    for (var i = 0; i < cols; i++) {
+      (function (i) {
+        var cell = cells[i];
+        setTimeout(function () {
+          cell.classList.add("reveal");
+          setTimeout(function () {
+            cell.classList.remove("filled"); cell.classList.add(score[i]);
+            updateKey(guess[i], score[i]);
+          }, 250);
+        }, i * 240);
+      })(i);
+    }
+  }
+
+  var RANK = { absent: 0, present: 1, correct: 2 };
+  function updateKey(ch, state) {
+    var k = normChar(ch), prev = keyState[k];
+    if (prev && RANK[prev] >= RANK[state]) return;
+    keyState[k] = state;
+    var el = keyEls[k];
+    if (el) { el.classList.remove("correct", "present", "absent"); el.classList.add(state); }
+  }
+
+  function shakeRow() { var row = grid[curRow].el; row.classList.add("shake"); setTimeout(function () { row.classList.remove("shake"); }, 500); }
+
+  function finish(won) {
+    var w = WORDS(), v = document.getElementById("verdict");
+    v.textContent = won ? B().ui.cheer : B().ui.lose;
+    v.className = "verdict " + (won ? "win" : "lose");
+    document.getElementById("rTerm").textContent = answer;
+    var tr = w[answer].tr || "";
+    document.getElementById("rTr").textContent = tr ? (B().ui.trLabel + ": " + tr) : "";
+    document.getElementById("rDef").textContent = w[answer].def;
+    renderStats();
+    resetCardBtns();
+    showResult();
+    // the hint is dead weight once the puzzle is over — give the slot to the result toggle
+    hintBtn.style.display = "none"; statsBtn.style.display = "flex";
+    setMsg("");
+  }
+
+  // ---- show / hide the result card so the player can look back at their tries ----
+  function showResult() { resultEl.className = "result show" + (lang === "ar" ? " rtl" : ""); }
+  function hideResult() { resultEl.className = "result" + (lang === "ar" ? " rtl" : ""); }
+  function toggleResult() {
+    if (resultEl.classList.contains("show")) hideResult(); else showResult();
+  }
+
+  // ---- share the game itself (not the player's result) ----
+  // Swap this for the real host once the game has a public home. The artifact link is
+  // private until it is shared from the artifact page's own share menu.
+  var SHARE_URL = "https://ahmed-khayat.github.io/promptle/";
+  var SHARE_ICON = rShare.innerHTML;
+  var CHECK_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4 6.4 11.8 13 4.6"/></svg>';
+
+  function shareGame() {
+    var ui = B().ui, body = ui.shareBlurb + "\n" + SHARE_URL;
+    if (navigator.share) {
+      try {
+        // native share sheet on mobile; a cancelled sheet rejects, which is not an error
+        navigator.share({ title: ui.shareTitle, text: ui.shareBlurb, url: SHARE_URL })
+          .then(shareOk, function () {});
+        return;
+      } catch (e) { /* fall through to clipboard */ }
+    }
+    copyText(body).then(shareOk, function () { window.prompt(ui.shareTitle, body); });
+  }
+  function shareOk() {
+    clearTimeout(shareTimer);
+    rShare.innerHTML = CHECK_ICON;
+    rShare.style.color = "var(--correct)";
+    shareTimer = setTimeout(resetCardBtns, 1700);
+  }
+
+  function copyText(txt) {
+    // execCommand fallback matters: the standalone file runs from file://, where the
+    // async clipboard API is frequently unavailable
+    function legacy() {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = txt;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0, txt.length);
+        var ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch (e) { return false; }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(txt).catch(function () {
+        if (!legacy()) throw new Error("copy failed");
+      });
+    }
+    return legacy() ? Promise.resolve() : Promise.reject(new Error("copy failed"));
+  }
+  // ---- "learn more": deep-link to the glossary entry for the word just played ----
+  // Opens the EthicalStack *dashboard* (the AI-Glossary-Challenge-by-ICAIRE repo) on the
+  // Explorer view with the term's entry already showing — English, Arabic AND French
+  // definitions plus aliases and sources, in the real UI rather than raw JSON.
+  // (?term= is handled by deepLinkTerm() at the bottom of dashboard/app.js.)
+  // The API serves the dashboard and must be running:
+  //   cd api && source venv/bin/activate && uvicorn app.main:app
+  // Change GLOSSARY_BASE to the public host once it is deployed somewhere.
+  var GLOSSARY_BASE = "http://127.0.0.1:8000";
+  var GLOSSARY_PATH = "/dashboard/?term=";
+  function glossaryHref() {
+    // the API indexes English terms only, so in Arabic mode look up the English equivalent
+    // (stored as .tr on every Arabic entry). get_exact() is case-insensitive.
+    var w = WORDS()[answer] || {};
+    var term = (lang === "en") ? answer : (w.tr || answer);
+    return GLOSSARY_BASE + GLOSSARY_PATH + encodeURIComponent(term);
+  }
+
+  // A link to a localhost API is useless to anyone opening a shared copy of this game, so
+  // only offer it when the page itself is running locally. No network probe: a fetch from an
+  // https artifact to http://127.0.0.1 is blocked as mixed content and would give a false
+  // negative even when the API is up.
+  function glossaryUsable() {
+    var localApi = /^https?:\/\/(127\.0\.0\.1|localhost)\b/.test(GLOSSARY_BASE);
+    var localPage = /^(127\.0\.0\.1|localhost)$/.test(location.hostname) || location.protocol === "file:";
+    return !localApi || localPage;
+  }
+
+  function setPractice(on) {
+    practice = on;
+    applyStaticUI();      // repaints the amber PRACTICE badge
+    hideResult();
+    loadDay();
+  }
+
+  var shareTimer = null;
+  function resetCardBtns() {
+    clearTimeout(shareTimer);
+    learnBtn.textContent = B().ui.learn;
+    learnBtn.href = glossaryHref();
+    learnBtn.style.display = glossaryUsable() ? "flex" : "none";
+    // in daily mode this is the "you're locked out until tomorrow — but keep playing" escape
+    nextBtn.textContent = practice ? B().ui.next : B().ui.keep;
+    nextBtn.style.display = "flex";
+    rShare.innerHTML = SHARE_ICON;
+    rShare.style.color = "";
+  }
+
+  // how-to-play modal
+  function buildModal() {
+    var ui = B().ui;
+    document.getElementById("mTitle").textContent = ui.howTitle;
+    document.getElementById("okBtn").textContent = ui.ok;
+    document.getElementById("modal").className = "modal" + (lang === "ar" ? " rtl" : "");
+    var list = document.getElementById("mList"); list.innerHTML = "";
+    ui.how.forEach(function (item) {
+      var li = document.createElement("li");
+      var mark = document.createElement("span");
+      if (item.sw) { mark.className = "sw " + item.sw; } else { mark.className = "dot"; mark.textContent = "•"; }
+      var txt = document.createElement("span"); txt.textContent = item.t;
+      li.appendChild(mark); li.appendChild(txt); list.appendChild(li);
+    });
+  }
+  // "Seen the instructions" is remembered forever, not per day — the popup auto-opens only on
+  // a first visit. Stored under its own key (not the date-scoped one) so it survives midnight.
+  // Marked on dismiss rather than on show: closing the tab without reading it shouldn't burn
+  // the one time we explain the game. The ? button always reopens it.
+  var HELP_KEY = "promptle.help";
+  function helpSeen() { try { return localStorage.getItem(HELP_KEY) === "1"; } catch (e) { return false; } }
+  function showHelp() { buildModal(); overlay.classList.add("show"); }
+  function hideHelp() {
+    overlay.classList.remove("show");
+    try { localStorage.setItem(HELP_KEY, "1"); } catch (e) {}
+  }
+
+  hintBtn.addEventListener("click", function () {
+    if (over || hintUsed) return;
+    // Only ever reveal a letter the player has NOT already discovered. Picking at random
+    // from the whole answer could land on a letter already lit green or amber on the
+    // keyboard, burning the one-shot hint on information they already had.
+    var unknown = [];
+    for (var i = 0; i < answer.length; i++) {
+      var k = normChar(answer[i]);
+      if (!keyState[k] && unknown.indexOf(k) === -1) unknown.push(k);
+    }
+    if (!unknown.length) { setMsg(B().ui.hintNone, true); return; }   // don't spend the hint
+    var pick = unknown[Math.floor(Math.random() * unknown.length)];
+    updateKey(pick, "correct");
+    // persist WHICH letter, not just that a hint was taken: on reload the letter has to be
+    // re-lit, otherwise a refresh would cost the player the hint and the information both
+    state.hint = pick; saveState();
+    hintUsed = true; hintBtn.classList.add("spent"); hintBtn.disabled = true;
+    setMsg(B().ui.hint, true);
+  });
+  document.getElementById("rClose").addEventListener("click", hideResult);
+  statsBtn.addEventListener("click", toggleResult);
+  nextBtn.addEventListener("click", function () {
+    if (practice) { hideResult(); loadDay(); } else setPractice(true);
+  });
+  rShare.addEventListener("click", shareGame);
+
+  // tell the embedding page (the ICAIRE drawer demo) which language is showing,
+  // so its pull-tab can read PROMPTLE / خمِّن to match
+  function postLang() {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "promptle-lang", lang: lang, name: B().ui.name }, "*");
+      }
+    } catch (e) {}
+  }
+
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var root = document.documentElement, cur = root.getAttribute("data-theme");
+    var isDark = cur ? cur === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    root.setAttribute("data-theme", isDark ? "light" : "dark");
+  });
+  langBtn.addEventListener("click", function () {
+    lang = (lang === "en" ? "ar" : "en");
+    applyStaticUI(); buildKeyboard(); loadDay(); postLang();
+  });
+  document.getElementById("helpBtn").addEventListener("click", showHelp);
+  document.getElementById("okBtn").addEventListener("click", hideHelp);
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) hideHelp(); });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (overlay.classList.contains("show")) { if (e.key === "Escape" || e.key === "Enter") hideHelp(); return; }
+    if (e.key === "Escape" && resultEl.classList.contains("show")) { hideResult(); return; }
+    if (e.key === "Enter" || e.key === "Backspace" || acceptChar(e.key)) { e.preventDefault(); handleKey(e.key); }
+  });
+
+  function applyTileSize() {
+    var size = tileSize(), fs = Math.round(size * 0.46);
+    grid.forEach(function (row) { row.cells.forEach(function (c) { c.style.width = size + "px"; c.style.height = size + "px"; c.style.fontSize = fs + "px"; }); });
+  }
+
+  var rt = null, rt2 = null;
+  function scheduleResize() {
+    clearTimeout(rt); clearTimeout(rt2);
+    // two passes: the first can land while the layout is still settling (orientation change,
+    // the drawer sliding open) and latch an intermediate size, so re-measure once more after
+    rt = setTimeout(applyTileSize, 150);
+    rt2 = setTimeout(applyTileSize, 500);
+  }
+  window.addEventListener("resize", scheduleResize);
+  // the window doesn't resize when the demo drawer slides the game into view, so watch the
+  // element itself — this is what re-sizes a board that was first laid out while hidden
+  if (window.ResizeObserver) { try { new ResizeObserver(scheduleResize).observe(wrapEl); } catch (e) {} }
+
+  applyStaticUI();
+  buildKeyboard();
+  loadDay();
+  postLang();
+  if (!helpSeen()) showHelp();   // first visit ever, in either mode — never again after that
+})();
+</script>

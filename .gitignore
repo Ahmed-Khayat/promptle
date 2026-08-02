@@ -1,0 +1,8 @@
+# Arabic frequency source — 41 MB, too large for git.
+# Re-download: https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/ar/ar_full.txt
+build/ar_full_raw.txt
+
+# superseded 50k list, kept locally only as a comparison baseline
+build/ar_freq.txt
+
+.DS_Store
