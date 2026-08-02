@@ -1,6 +1,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Promptle — ICAIRE AI Glossary Game</title>
+<!-- Almarai is ICAIRE's Arabic face (they load it via next/font/google). Latin needs no
+     webfont — their stack is Calibri/Carlito/Segoe UI, all system fonts. If this request is
+     blocked (offline, file://, or a strict CSP) the stack below falls back cleanly. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap">
 <style>
   :root {
     --bg:#e8edf3; --surface:#fff; --surface-2:#f1f4f8; --ink:#0e2841; --ink-soft:#3d5673;
@@ -29,27 +35,44 @@
     --accent:#8bc34a; --tile-filled:#365a7c; --shadow:0 14px 50px rgba(0,0,0,.45);
   }
 
+  /* ---- typography: mirrors ICAIRE's own tokens (apps/web/src/app/globals.css) ----
+     They swap the whole stack by page language rather than relying on per-glyph fallback,
+     so we do the same: applyStaticUI() sets <html lang>, and that flips --font-ui. */
+  :root {
+    --font-latin: Calibri, Carlito, "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-arabic: "Almarai", "Noto Kufi Arabic", "Segoe UI", sans-serif;
+    --font-ui: var(--font-latin);
+  }
+  html[lang="ar"] { --font-ui: var(--font-arabic); }
+
   * { box-sizing:border-box; }
   html, body { margin:0; height:100%; }
   body {
     background:var(--bg); color:var(--ink);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:var(--font-ui);
     height:100%; overflow:hidden; -webkit-font-smoothing:antialiased;
   }
   .wrap { height:100%; max-width:520px; margin:0 auto; padding:10px 14px 40px;
     display:flex; flex-direction:column; gap:9px; justify-content:flex-start; }
 
-  /* ---- header: 2 icons left, centered title, 2 icons right ---- */
-  header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:2px; }
+  /* ---- header: 2 icons left, centered title, 2 icons right ----
+     Pinned to LTR so the button bar does NOT mirror when the language changes: ع/? stay left,
+     hint/stats/theme stay right. Only the labels swap. The board and clue still flip (Arabic
+     has to read right-to-left) — it is just the chrome that stays put.
+     unicode-bidi:plaintext lets the Arabic title/subtitle still lay out RTL inside this LTR bar,
+     each element using its own first-strong character rather than the parent's direction. */
+  header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:2px;
+    direction:ltr; }
+  header h1, header .sub { unicode-bidi:plaintext; }
   .tools-l, .tools-r { display:flex; gap:6px; flex:0 0 auto; }
   .title-wrap { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px; }
-  header h1 { margin:0; font-family:"Trebuchet MS",system-ui,sans-serif; font-size:25px; font-weight:800;
+  header h1 { margin:0; font-family:var(--font-ui); font-size:25px; font-weight:800;
     letter-spacing:.02em; color:var(--ink); line-height:1; text-transform:none; white-space:nowrap; }
   header .sub { font-size:11px; color:var(--muted); white-space:nowrap; }
   .icon-btn {
     border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
     width:34px; height:34px; border-radius:9px; cursor:pointer;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-family:var(--font-ui);
     font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center;
     line-height:1; padding:0; transition:transform .12s, background .2s;
   }
@@ -112,7 +135,9 @@
   .result .verdict.lose { color:var(--present); }
   .result .term-row { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
   .result .term { font-size:26px; font-weight:800; color:var(--ink); }
-  .result .rtr { font-size:13px; font-weight:600; color:var(--accent); }
+  /* the "In Arabic: …" translation is Arabic even while the UI is English, so it needs the
+     Arabic face explicitly — --font-ui is the Latin stack in that mode */
+  .result .rtr { font-size:13px; font-weight:600; color:var(--accent); font-family:var(--font-arabic); }
   .result .def { font-size:13.5px; line-height:1.45; color:var(--ink-soft); margin:0; }
   /* .result already inherits direction:rtl from .wrap, so a flex row is laid out
      right-to-left on its own — adding row-reverse here would flip it back. */
@@ -153,7 +178,7 @@
   .modal { background:var(--surface); color:var(--ink); border-radius:16px; padding:20px 20px 18px; max-width:380px; width:100%;
     box-shadow:0 20px 60px rgba(0,0,0,.4); }
   .modal.rtl { direction:rtl; text-align:right; }
-  .modal h2 { margin:0 0 10px; font-family:"Trebuchet MS",system-ui,sans-serif; font-size:20px; font-weight:800; color:var(--ink); }
+  .modal h2 { margin:0 0 10px; font-family:var(--font-ui); font-size:20px; font-weight:800; color:var(--ink); }
   .modal ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; }
   .modal li { font-size:13.5px; line-height:1.4; color:var(--ink-soft); display:flex; gap:9px; align-items:flex-start; }
   .modal .sw { flex:0 0 auto; width:16px; height:16px; border-radius:4px; margin-top:1px; }
@@ -521,7 +546,8 @@
 
   function applyStaticUI() {
     var ui = B().ui;
-    document.querySelector(".wrap").dir = B().dir;   // whole layout LTR / RTL
+    document.querySelector(".wrap").dir = B().dir;   // board + clue flip; header is pinned LTR in CSS
+    document.documentElement.lang = lang;            // drives --font-ui (Latin vs Almarai)
     document.getElementById("title").textContent = ui.name;
     subEl.textContent = ui.sub;
     defLabel.textContent = ui.defLabel;
