@@ -9,30 +9,58 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&display=swap">
 <style>
   :root {
-    --bg:#e8edf3; --surface:#fff; --surface-2:#f1f4f8; --ink:#0e2841; --ink-soft:#3d5673;
-    --muted:#6b7d92; --line:#bfcbda; --correct:#4ea72e; --present:#c9862b; --absent:#6d7c8d;
-    --key:#bdc9d8; --key-ink:#0e2841; --key-spent:#3d4854; --key-spent-ink:#c4ccd4;
-    --accent:#196b24; --tile-filled:#8195ab; --shadow:0 10px 40px rgba(14,40,65,.12);
+    /* ICAIRE brand tokens (DESIGN_SYSTEM.md §2): Midnight/Deep Forest/Signal Lime/
+       Executive Gold/Ink/Canvas. correct=Deep Forest (light) swaps to Signal Lime on dark
+       Midnight surfaces per §6's own rule for primary color on dark ("Primary on Midnight:
+       Signal Lime fill + Midnight text, never white"); present=Executive Gold in BOTH themes,
+       since gold is a status/data encoding here (§0.3 exempts it from the one-per-view budget)
+       and the token is never redefined per-theme in their own globals.css either. */
+    --bg:#f4f7f5; --surface:#fff; --surface-2:#e9f0eb; --ink:#16242d; --ink-soft:#4a5a63;
+    --muted:#667079; --line:#e2e8e5; --line-strong:#c3cec8;
+    --correct:#1c5631; --present:#d8a23a; --absent:#55697a;
+    --key:#c3cec8; --key-ink:#16242d; --key-spent:#9caaa3; --key-spent-ink:#465049;
+    --accent:#1c5631; --accent-hover:#164826; --tile-filled:#97a6ad;
+    /* text placed ON a fill of that color — §0.2/§6: never white on Lime; Gold gets the same
+       treatment since white-on-gold measures ~2.3:1, well under WCAG's 3:1 floor for large text */
+    --on-correct:#fff; --on-present:#16242d; --on-absent:#fff; --on-accent:#fff;
+    --glow-rgb:28,86,49;
+    --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-pill:999px;
+    /* cards themselves are flat/no-shadow (§6); this is only for FLOATING overlays
+       (result popup, how-to-play modal) — the §2 elevation tier those are legal on */
+    --shadow:0 20px 48px rgba(15,42,56,.16);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg:#081a2c; --surface:#0e2841; --surface-2:#12324c; --ink:#eaf1f8; --ink-soft:#a9bccf;
-      --muted:#7f95ab; --line:#1e3f5c; --correct:#4ea72e; --present:#d0902f; --absent:#3a4e62;
-      --key:#2d4d6b; --key-ink:#eaf1f8; --key-spent:#0b1622; --key-spent-ink:#61748a;
-      --accent:#8bc34a; --tile-filled:#365a7c; --shadow:0 14px 50px rgba(0,0,0,.45);
+      --bg:#0f2a38; --surface:#14384a; --surface-2:#1b425a; --ink:#fff; --ink-soft:#b7c4cb;
+      --muted:#8a99a1; --line:#24485c; --line-strong:#2f5468;
+      --correct:#8dc63f; --present:#d8a23a; --absent:#3d5b73;
+      --key:#2f5468; --key-ink:#fff; --key-spent:#16303f; --key-spent-ink:#5b7284;
+      --accent:#8dc63f; --accent-hover:#79b332; --tile-filled:#4a6a82;
+      --on-correct:#16242d; --on-present:#16242d; --on-absent:#fff; --on-accent:#16242d;
+      --glow-rgb:141,198,63;
+      --shadow:0 20px 54px rgba(0,0,0,.5);
     }
   }
   :root[data-theme="light"] {
-    --bg:#e8edf3; --surface:#fff; --surface-2:#f1f4f8; --ink:#0e2841; --ink-soft:#3d5673;
-    --muted:#6b7d92; --line:#bfcbda; --correct:#4ea72e; --present:#c9862b; --absent:#6d7c8d;
-    --key:#bdc9d8; --key-ink:#0e2841; --key-spent:#3d4854; --key-spent-ink:#c4ccd4;
-    --accent:#196b24; --tile-filled:#8195ab; --shadow:0 10px 40px rgba(14,40,65,.12);
+    --bg:#f4f7f5; --surface:#fff; --surface-2:#e9f0eb; --ink:#16242d; --ink-soft:#4a5a63;
+    --muted:#667079; --line:#e2e8e5; --line-strong:#c3cec8;
+    --correct:#1c5631; --present:#d8a23a; --absent:#55697a;
+    --key:#c3cec8; --key-ink:#16242d; --key-spent:#9caaa3; --key-spent-ink:#465049;
+    --accent:#1c5631; --accent-hover:#164826; --tile-filled:#97a6ad;
+    --on-correct:#fff; --on-present:#16242d; --on-absent:#fff; --on-accent:#fff;
+    --glow-rgb:28,86,49;
+    --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-pill:999px;
+    --shadow:0 20px 48px rgba(15,42,56,.16);
   }
   :root[data-theme="dark"] {
-    --bg:#081a2c; --surface:#0e2841; --surface-2:#12324c; --ink:#eaf1f8; --ink-soft:#a9bccf;
-    --muted:#7f95ab; --line:#1e3f5c; --correct:#4ea72e; --present:#d0902f; --absent:#3a4e62;
-    --key:#2d4d6b; --key-ink:#eaf1f8; --key-spent:#0b1622; --key-spent-ink:#61748a;
-    --accent:#8bc34a; --tile-filled:#365a7c; --shadow:0 14px 50px rgba(0,0,0,.45);
+    --bg:#0f2a38; --surface:#14384a; --surface-2:#1b425a; --ink:#fff; --ink-soft:#b7c4cb;
+    --muted:#8a99a1; --line:#24485c; --line-strong:#2f5468;
+    --correct:#8dc63f; --present:#d8a23a; --absent:#3d5b73;
+    --key:#2f5468; --key-ink:#fff; --key-spent:#16303f; --key-spent-ink:#5b7284;
+    --accent:#8dc63f; --accent-hover:#79b332; --tile-filled:#4a6a82;
+    --on-correct:#16242d; --on-present:#16242d; --on-absent:#fff; --on-accent:#16242d;
+    --glow-rgb:141,198,63;
+    --shadow:0 20px 54px rgba(0,0,0,.5);
   }
 
   /* ---- typography: mirrors ICAIRE's own tokens (apps/web/src/app/globals.css) ----
@@ -64,34 +92,38 @@
   header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:2px;
     direction:ltr; }
   header h1, header .sub { unicode-bidi:plaintext; }
-  .tools-l, .tools-r { display:flex; gap:6px; flex:0 0 auto; }
+  .tools-l, .tools-r { display:flex; gap:8px; flex:0 0 auto; }
   .title-wrap { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px; }
   header h1 { margin:0; font-family:var(--font-ui); font-size:25px; font-weight:800;
     letter-spacing:.02em; color:var(--ink); line-height:1; text-transform:none; white-space:nowrap; }
   header .sub { font-size:11px; color:var(--muted); white-space:nowrap; }
+  /* Circular icon chip (DESIGN_SYSTEM §6): 2.5rem (40px) circle, --surface-2 (raised) fill,
+     icon in --accent (Forest light / Lime dark, currentColor for the inline SVG). No border —
+     the chip's own fill against the page is the boundary, matching the spec's "ONE icon
+     treatment site-wide" rather than the previous ad-hoc bordered square. */
   .icon-btn {
-    border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
-    width:34px; height:34px; border-radius:9px; cursor:pointer;
+    border:none; background:var(--surface-2); color:var(--accent);
+    width:40px; height:40px; border-radius:50%; cursor:pointer;
     font-family:var(--font-ui);
     font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center;
     line-height:1; padding:0; transition:transform .12s, background .2s;
   }
-  .icon-btn:hover { background:var(--surface-2); }
+  .icon-btn:hover { background:var(--line); }
   .icon-btn:active { transform:scale(.94); }
   .icon-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   #langBtn { font-size:18px; }
   .hint-btn { font-size:17px; animation:glow 2.1s ease-in-out infinite; }
   .hint-btn.spent { animation:none; opacity:.4; cursor:default; }
   @keyframes glow {
-    0%,100% { box-shadow:0 0 0 0 rgba(78,167,46,0); border-color:var(--line); }
-    50% { box-shadow:0 0 12px 2px rgba(78,167,46,.5); border-color:var(--correct); }
+    0%,100% { box-shadow:0 0 0 0 rgba(var(--glow-rgb),0); border-color:var(--line); }
+    50% { box-shadow:0 0 12px 2px rgba(var(--glow-rgb),.5); border-color:var(--correct); }
   }
 
   /* ---- clue ---- */
-  .clue { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:9px 13px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:4px; }
+  .clue { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg); padding:9px 13px; display:flex; flex-direction:column; gap:4px; }
   .clue .lbl { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:10px; letter-spacing:.16em; font-weight:700; color:var(--accent); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .clue .lbl .len { background:var(--accent); color:var(--surface); padding:2px 8px; border-radius:20px; letter-spacing:.06em; font-size:9.5px; }
-  .clue .lbl .len.practice { background:var(--present); }   /* amber: you are NOT on the daily word */
+  .clue .lbl .len { background:var(--accent); color:var(--on-accent); padding:2px 8px; border-radius:var(--radius-pill); letter-spacing:.06em; font-size:9.5px; }
+  .clue .lbl .len.practice { background:var(--present); color:var(--on-present); }   /* Gold: you are NOT on the daily word */
   .clue p { margin:0; font-size:14.5px; line-height:1.35; color:var(--ink); font-weight:500; }
   .clue p.rtl { direction:rtl; text-align:right; font-size:16px; }
 
@@ -101,11 +133,11 @@
   /* ---- board ---- */
   .board { display:flex; flex-direction:column; gap:6px; align-items:center; margin-top:2px; }
   .row { display:flex; gap:6px; }
-  .tile { border-radius:8px; border:2px solid var(--line); display:grid; place-items:center; font-weight:800; text-transform:uppercase; color:var(--ink); background:transparent; user-select:none; }
+  .tile { border-radius:var(--radius-sm); border:2px solid var(--line); display:grid; place-items:center; font-weight:800; text-transform:uppercase; color:var(--ink); background:transparent; user-select:none; }
   .tile.filled { border-color:var(--tile-filled); animation:pop .1s ease; }
-  .tile.correct { background:var(--correct); border-color:var(--correct); color:#fff; }
-  .tile.present { background:var(--present); border-color:var(--present); color:#fff; }
-  .tile.absent { background:var(--absent); border-color:var(--absent); color:#fff; }
+  .tile.correct { background:var(--correct); border-color:var(--correct); color:var(--on-correct); }
+  .tile.present { background:var(--present); border-color:var(--present); color:var(--on-present); }
+  .tile.absent { background:var(--absent); border-color:var(--absent); color:var(--on-absent); }
   .tile.reveal { animation:flip .5s ease forwards; }
   .row.shake { animation:shake .5s; }
   @keyframes pop { 0%{transform:scale(.9);} 100%{transform:scale(1);} }
@@ -117,17 +149,17 @@
      .wrap's bottom padding keeps it off the very bottom edge. */
   .kb { display:flex; flex-direction:column; gap:5px; margin-top:auto; }
   .kb-row { display:flex; gap:4px; justify-content:center; }
-  .key { flex:1; min-width:0; height:46px; border-radius:7px; border:none; background:var(--key); color:var(--key-ink); font-size:14px; font-weight:700; text-transform:uppercase; cursor:pointer; display:grid; place-items:center; transition:transform .1s, filter .2s, background .3s; }
+  .key { flex:1; min-width:0; height:46px; border-radius:var(--radius-sm); border:none; background:var(--key); color:var(--key-ink); font-size:14px; font-weight:700; text-transform:uppercase; cursor:pointer; display:grid; place-items:center; transition:transform .1s, filter .2s, background .3s; }
   .key.wide { flex:1.4; font-size:11px; }
   .key:hover { filter:brightness(1.06); }
   .key:active { transform:translateY(1px); }
-  .key.correct { background:var(--correct); color:#fff; }
-  .key.present { background:var(--present); color:#fff; }
+  .key.correct { background:var(--correct); color:var(--on-correct); }
+  .key.present { background:var(--present); color:var(--on-present); }
   .key.absent { background:var(--key-spent); color:var(--key-spent-ink); }
 
   /* ---- result ---- */
   .result { position:absolute; inset:0; margin:auto; height:max-content; max-width:400px; z-index:20;
-    background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px; box-shadow:var(--shadow);
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg); padding:18px; box-shadow:var(--shadow);
     display:none; flex-direction:column; gap:9px; }
   .result.show { display:flex; }
   .result .verdict { font-size:12.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
@@ -142,41 +174,41 @@
   /* .result already inherits direction:rtl from .wrap, so a flex row is laid out
      right-to-left on its own — adding row-reverse here would flip it back. */
   .result.rtl .term, .result.rtl .def, .result.rtl .rtr { direction:rtl; text-align:right; }
-  .result .again { margin-top:3px; align-self:flex-start; background:var(--accent); color:var(--surface); border:none; border-radius:10px; padding:10px 20px; font-size:13.5px; font-weight:700; cursor:pointer; }
-  .result .again:hover { filter:brightness(1.08); }
+  .result .again { margin-top:3px; align-self:flex-start; background:var(--accent); color:var(--on-accent); border:none; border-radius:var(--radius-md); padding:10px 20px; font-size:13.5px; font-weight:700; cursor:pointer; }
+  .result .again:hover { background:var(--accent-hover); }
   .result .again.locked { background:var(--surface-2); color:var(--muted); cursor:default; filter:none; }
 
   /* share-the-game + dismiss, in the card's corner */
   .rtools { position:absolute; top:9px; right:10px; display:flex; gap:2px; }
   .result.rtl .rtools { right:auto; left:10px; }
-  .rbtn { width:26px; height:26px; border-radius:7px; border:none; background:transparent;
+  .rbtn { width:26px; height:26px; border-radius:var(--radius-sm); border:none; background:transparent;
     color:var(--muted); font-size:19px; line-height:1; cursor:pointer;
     display:grid; place-items:center; padding:0; }
-  .rbtn:hover { background:var(--surface-2); color:var(--ink); }
+  .rbtn:hover { background:var(--surface-2); color:var(--accent); }
   .rbtn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   .rbtn svg { display:block; }
   .result .verdict { padding-inline-end:58px; }
 
   /* stats strip */
   .stats { display:flex; gap:6px; margin-top:2px; }
-  .stats div { flex:1; background:var(--surface-2); border-radius:9px; padding:7px 4px; text-align:center; }
+  .stats div { flex:1; background:var(--surface-2); border-radius:var(--radius-md); padding:7px 4px; text-align:center; }
   .stats b { display:block; font-size:19px; font-weight:800; color:var(--ink); line-height:1.15; }
   .stats span { font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
   .result.rtl .stats span { text-transform:none; letter-spacing:0; font-size:10.5px; }
 
-  .resbtn { margin-top:4px; width:100%; background:var(--accent); color:var(--surface); border:none;
-    border-radius:10px; padding:11px; font-size:13.5px; font-weight:700; cursor:pointer;
+  .resbtn { margin-top:4px; width:100%; background:var(--accent); color:var(--on-accent); border:none;
+    border-radius:var(--radius-md); padding:11px; font-size:13.5px; font-weight:700; cursor:pointer;
     display:flex; align-items:center; justify-content:center; gap:7px;
     text-decoration:none; text-align:center; }
-  .resbtn:hover { filter:brightness(1.08); }
+  .resbtn:hover { background:var(--accent-hover); }
   .resbtn:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
 
   /* ---- how-to-play modal ---- */
   .overlay { position:fixed; inset:0; background:rgba(14,40,65,.5); backdrop-filter:blur(2px); z-index:30;
     display:none; align-items:center; justify-content:center; padding:18px; }
   .overlay.show { display:flex; }
-  .modal { background:var(--surface); color:var(--ink); border-radius:16px; padding:20px 20px 18px; max-width:380px; width:100%;
-    box-shadow:0 20px 60px rgba(0,0,0,.4); }
+  .modal { background:var(--surface); color:var(--ink); border-radius:var(--radius-lg); padding:20px 20px 18px; max-width:380px; width:100%;
+    box-shadow:var(--shadow); }
   .modal.rtl { direction:rtl; text-align:right; }
   .modal h2 { margin:0 0 10px; font-family:var(--font-ui); font-size:20px; font-weight:800; color:var(--ink); }
   .modal ul { margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; }
@@ -184,8 +216,8 @@
   .modal .sw { flex:0 0 auto; width:16px; height:16px; border-radius:4px; margin-top:1px; }
   .modal .sw.g { background:var(--correct); } .modal .sw.a { background:var(--present); } .modal .sw.n { background:var(--absent); }
   .modal .dot { flex:0 0 auto; color:var(--accent); font-weight:900; }
-  .modal .ok { margin-top:15px; width:100%; background:var(--accent); color:var(--surface); border:none; border-radius:10px; padding:11px; font-size:14px; font-weight:700; cursor:pointer; }
-  .modal .ok:hover { filter:brightness(1.08); }
+  .modal .ok { margin-top:15px; width:100%; background:var(--accent); color:var(--on-accent); border:none; border-radius:var(--radius-md); padding:11px; font-size:14px; font-weight:700; cursor:pointer; }
+  .modal .ok:hover { background:var(--accent-hover); }
   .modal .ok:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
 
   /* Mobile: tile size here is limited by WIDTH (7 tiles across ~375px), never by height —
