@@ -234,6 +234,36 @@
   @media (prefers-reduced-motion: reduce) {
     .tile.filled, .tile.reveal, .row.shake, .hint-btn { animation:none !important; }
   }
+
+  /* ---- booth QR rails ----
+     Fixed to the left/right gutters so booth visitors can scan the game onto their own
+     phone while it runs on the big screen. The QR points at /go/ (a redirect that counts
+     the scan, then forwards here). Two artworks — Forest-on-Canvas for light, Lime-on-
+     Midnight for dark — swapped by the SAME theme rule the rest of the UI uses. Hidden
+     below 1024px, where the gutters are too narrow to hold them without overlapping .wrap. */
+  .qr-rail { position:fixed; top:50%; transform:translateY(-50%); z-index:15;
+    display:none; flex-direction:column; align-items:center; gap:9px;
+    width:clamp(148px, 14vw, 196px); pointer-events:none; }
+  .qr-rail.left  { left:clamp(14px, 3vw, 52px); }
+  .qr-rail.right { right:clamp(14px, 3vw, 52px); }
+  .qr-rail a { display:block; width:100%; pointer-events:auto; border-radius:var(--radius-lg);
+    transition:transform .12s; }
+  .qr-rail a:hover { transform:translateY(-2px); }
+  .qr-rail a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+  .qr-rail img { width:100%; height:auto; display:block; border-radius:var(--radius-lg);
+    border:1px solid var(--line); }
+  .qr-rail .cap { font-family:var(--font-ui); font-size:12px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .qr-rail .qr-dark { display:none; }
+  @media (min-width: 1024px) { .qr-rail { display:flex; } }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .qr-rail .qr-light { display:none; }
+    :root:not([data-theme="light"]) .qr-rail .qr-dark  { display:block; }
+  }
+  :root[data-theme="dark"]  .qr-rail .qr-light { display:none; }
+  :root[data-theme="dark"]  .qr-rail .qr-dark  { display:block; }
+  :root[data-theme="light"] .qr-rail .qr-light { display:block; }
+  :root[data-theme="light"] .qr-rail .qr-dark  { display:none; }
 </style>
 
 <div class="wrap">
@@ -282,6 +312,22 @@
     <a class="resbtn" id="learnBtn" href="#" target="_blank" rel="noopener noreferrer">Read the full glossary entry</a>
   </div>
 </div>
+
+<!-- booth QR rails — scan to play on your phone (see .qr-rail styles above) -->
+<aside class="qr-rail left">
+  <a href="go/" aria-label="Open Promptle on your phone">
+    <img class="qr-light" src="assets/qr-light.png" alt="" width="196" height="196" loading="lazy">
+    <img class="qr-dark"  src="assets/qr-dark.png"  alt="" width="196" height="196" loading="lazy">
+  </a>
+  <span class="cap">Scan to play</span>
+</aside>
+<aside class="qr-rail right">
+  <a href="go/" aria-label="Open Promptle on your phone">
+    <img class="qr-light" src="assets/qr-light.png" alt="" width="196" height="196" loading="lazy">
+    <img class="qr-dark"  src="assets/qr-dark.png"  alt="" width="196" height="196" loading="lazy">
+  </a>
+  <span class="cap">Scan to play</span>
+</aside>
 
 <!-- how to play -->
 <div class="overlay" id="overlay">
