@@ -338,6 +338,16 @@
   </div>
 </div>
 
+<!-- ICAIRE booth analytics helper: fire-and-forget integer bumps to abacus (no PII). -->
+<script>
+window.pBump = (function () {
+  var API = "https://abacus.jasoncameron.dev/hit/icaire-promptle-2026/";
+  return function (key) {
+    try { fetch(API + key, { cache: "no-store", keepalive: true }); } catch (e) {}
+  };
+})();
+</script>
+
 <script>
 (function () {
   "use strict";
@@ -593,6 +603,13 @@ __AR_WORDS__
     state.counted = true;
     var s = loadStats(), d = dayNumber();
     if (s.last === d) { saveState(); return; }   // belt & braces: never count a day twice
+    try {
+      var gc = state.guesses.length;
+      pBump("games");
+      pBump(won ? "win" : "loss");
+      if (won && gc >= 1 && gc <= 6) pBump("guess" + gc);
+      pBump("lang-" + lang);
+    } catch (e) {}
     s.played++;
     if (won) {
       s.streak = (s.last === d - 1) ? s.streak + 1 : 1;
@@ -755,6 +772,7 @@ __AR_WORDS__
   var CHECK_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4 6.4 11.8 13 4.6"/></svg>';
 
   function shareGame() {
+    try { pBump("share"); } catch (e) {}
     var ui = B().ui, body = ui.shareBlurb + "\n" + SHARE_URL;
     if (navigator.share) {
       try {
@@ -887,6 +905,7 @@ __AR_WORDS__
     // persist WHICH letter, not just that a hint was taken: on reload the letter has to be
     // re-lit, otherwise a refresh would cost the player the hint and the information both
     state.hint = pick; saveState();
+    try { pBump("hint"); } catch (e) {}
     hintUsed = true; hintBtn.classList.add("spent"); hintBtn.disabled = true;
     setMsg(B().ui.hint, true);
   });
@@ -955,18 +974,26 @@ __AR_WORDS__
 
 <!-- ICAIRE booth analytics: one visit per browser per Riyadh-day, fire-and-forget.
      The per-day guard stops the booth screen (which reloads all day) from inflating the
-     count, and keeps it closer to "visitors" than "page views". Scan traffic still also
-     goes through /go/, so /stats/ can show visits and QR scans side by side. -->
+     count, and keeps it closer to "visitors" than "page views". theme/device/returning are
+     piggy-backed on the same guard so they sum to ~visits. Scan traffic also goes through
+     /go/, so /stats/ can show visits and QR scans side by side. No PII — integers only. -->
 <script>
 (function () {
   try {
-    var NS = "promptle-icaire-live";
     var day = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
     if (localStorage.getItem("promptle_pv") === day) return;
+    var known = !!(localStorage.getItem("promptle.stats.en") ||
+                   localStorage.getItem("promptle.stats.ar") ||
+                   localStorage.getItem("promptle_pv"));
     localStorage.setItem("promptle_pv", day);
-    var API = "https://abacus.jasoncameron.dev/hit/" + NS + "/";
-    fetch(API + "visits",      { cache: "no-store", keepalive: true });
-    fetch(API + "vday-" + day, { cache: "no-store", keepalive: true });
+    var b = window.pBump || function () {};
+    b("visits");
+    b("vday-" + day);
+    b(known ? "returning" : "newvisitor");
+    var attr = document.documentElement.getAttribute("data-theme");
+    var dark = attr ? attr === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    b(dark ? "theme-dark" : "theme-light");
+    b(matchMedia("(max-width: 768px)").matches ? "device-mobile" : "device-desktop");
   } catch (e) {}
 })();
 </script>
