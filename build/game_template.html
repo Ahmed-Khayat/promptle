@@ -605,8 +605,10 @@ __AR_WORDS__
     if (s.last === d) { saveState(); return; }   // belt & braces: never count a day twice
     try {
       var gc = state.guesses.length;
+      var dstr = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
       pBump("games");
       pBump(won ? "win" : "loss");
+      pBump((won ? "win-" : "loss-") + dstr);   // per-day solve rate = word difficulty
       if (won && gc >= 1 && gc <= 6) pBump("guess" + gc);
       pBump("lang-" + lang);
     } catch (e) {}

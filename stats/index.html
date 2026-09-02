@@ -8,18 +8,21 @@
   :root{
     --bg:#f4f7f5; --surface:#fff; --surface-2:#e9f0eb; --ink:#16242d; --ink-soft:#4a5a63;
     --muted:#667079; --line:#e2e8e5; --accent:#1c5631; --bar:#1c5631; --gold:#d8a23a;
+    --good:#1c7a3f; --warn:#c98a1f; --bad:#c0453b;
     --radius:16px; --shadow:0 20px 48px rgba(15,42,56,.10);
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
       --bg:#0f2a38; --surface:#14384a; --surface-2:#1b425a; --ink:#fff; --ink-soft:#b7c4cb;
       --muted:#8a99a1; --line:#24485c; --accent:#8dc63f; --bar:#8dc63f; --gold:#d8a23a;
+      --good:#8dc63f; --warn:#e0a53a; --bad:#e0685c;
       --shadow:0 20px 54px rgba(0,0,0,.45);
     }
   }
   :root[data-theme="dark"]{
     --bg:#0f2a38; --surface:#14384a; --surface-2:#1b425a; --ink:#fff; --ink-soft:#b7c4cb;
     --muted:#8a99a1; --line:#24485c; --accent:#8dc63f; --bar:#8dc63f; --gold:#d8a23a;
+    --good:#8dc63f; --warn:#e0a53a; --bad:#e0685c;
     --shadow:0 20px 54px rgba(0,0,0,.45);
   }
   *{box-sizing:border-box;}
@@ -45,11 +48,13 @@
   .hero .box{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
     padding:20px 22px; box-shadow:var(--shadow);}
   .hero .k{font-size:12px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--muted);}
-  .hero .big{font-size:46px; font-weight:800; line-height:1.05; margin-top:4px; letter-spacing:-.02em;
+  .hero .big{font-size:44px; font-weight:800; line-height:1.05; margin-top:4px; letter-spacing:-.02em;
     font-variant-numeric:tabular-nums;}
   .hero .note{font-size:12px; color:var(--muted); margin-top:5px;}
+  .pill{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase;
+    padding:2px 8px; border-radius:999px; color:#fff;}
 
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:14px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:12px; margin-bottom:14px;}
   .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px;}
   .card .k{font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);}
   .card .v{font-size:26px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums;}
@@ -63,7 +68,7 @@
   .panel h2{margin:0 0 4px; font-size:14px; font-weight:800; letter-spacing:.02em;}
   .panel .h2sub{font-weight:400; color:var(--muted);}
 
-  .chart{display:flex; align-items:flex-end; gap:6px; height:180px; overflow-x:auto; padding-top:18px;}
+  .chart{display:flex; align-items:flex-end; gap:6px; height:170px; overflow-x:auto; padding-top:18px;}
   .bar{flex:1 0 24px; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:24px;}
   .bar .col{width:100%; max-width:32px; background:var(--bar); border-radius:6px 6px 2px 2px;
     min-height:3px; transition:height .3s;}
@@ -77,7 +82,7 @@
   .dist .row b{width:14px; text-align:center; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
   .dist .track{flex:1; background:var(--surface-2); border-radius:999px; height:20px; overflow:hidden;}
   .dist .fill{height:100%; background:var(--bar); border-radius:999px; min-width:2px; transition:width .3s;}
-  .dist .row span{width:32px; text-align:right; color:var(--ink-soft); font-variant-numeric:tabular-nums; font-weight:700;}
+  .dist .row span{width:34px; text-align:right; color:var(--ink-soft); font-variant-numeric:tabular-nums; font-weight:700;}
 
   .splits{margin-top:12px; display:flex; flex-direction:column; gap:16px;}
   .split .lab{display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-soft); margin-bottom:6px;}
@@ -85,9 +90,20 @@
   .split .bar2 i{display:block; height:100%;}
   .split .bar2 i.a{background:var(--accent);} .split .bar2 i.b{background:var(--gold);}
 
+  table.diff{width:100%; border-collapse:collapse; margin-top:12px; font-size:13px;}
+  table.diff th{text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+    font-weight:700; padding:6px 8px; border-bottom:1px solid var(--line);}
+  table.diff td{padding:8px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  table.diff td.num{font-variant-numeric:tabular-nums; color:var(--ink-soft); white-space:nowrap;}
+  table.diff .ratewrap{display:flex; align-items:center; gap:9px;}
+  table.diff .rtrack{flex:1; min-width:70px; height:12px; border-radius:999px; background:var(--surface-2); overflow:hidden;}
+  table.diff .rfill{height:100%; border-radius:999px;}
+  table.diff .rpct{width:42px; text-align:right; font-weight:800; font-variant-numeric:tabular-nums;}
+  table.diff tr.empty td{color:var(--muted);}
+
   .foot{font-size:12px; color:var(--muted); text-align:center; margin-top:10px;}
   .foot a{color:var(--accent);}
-  .stale{color:#c98a1f;}
+  .stale{color:var(--warn);}
   [hidden]{display:none!important;}
 </style>
 
@@ -112,16 +128,21 @@
     <div class="box">
       <div class="k">Games played</div>
       <div class="big" id="games">—</div>
-      <div class="note"><span id="completion">—</span> of visits finish a puzzle</div>
+      <div class="note"><span id="completion">—</span> of visitors finish a puzzle</div>
     </div>
     <div class="box">
-      <div class="k">Win rate</div>
+      <div class="k">Solved</div>
       <div class="big" id="winrate">—</div>
-      <div class="note"><span id="winloss">—</span> win / loss</div>
+      <div class="note"><span id="winloss">—</span> solved / failed · <span class="pill" id="diffPill" style="background:var(--muted)">—</span></div>
     </div>
   </div>
 
   <div class="grid">
+    <div class="card">
+      <div class="k">Avg guesses to solve</div>
+      <div class="v" id="avgGuess">—</div>
+      <div class="p">lower = easier</div>
+    </div>
     <div class="card">
       <div class="k">Via QR scan</div>
       <div class="v" id="scans">—</div>
@@ -150,13 +171,16 @@
   </div>
 
   <div class="panel span">
-    <h2>Visits per day <span class="h2sub">· Riyadh time, last 12 days</span></h2>
-    <div class="chart" id="chart"></div>
+    <h2>Word difficulty by day <span class="h2sub">· solve rate per daily puzzle, Riyadh time</span></h2>
+    <table class="diff">
+      <thead><tr><th>Day</th><th>Played</th><th>Solved / failed</th><th style="width:46%">Solve rate</th></tr></thead>
+      <tbody id="diffBody"></tbody>
+    </table>
   </div>
 
   <div class="cols">
     <div class="panel">
-      <h2>Guess distribution <span class="h2sub">· winning games</span></h2>
+      <h2>Guess distribution <span class="h2sub">· solved games</span></h2>
       <div class="dist" id="dist"></div>
     </div>
     <div class="panel">
@@ -178,8 +202,13 @@
     </div>
   </div>
 
+  <div class="panel span">
+    <h2>Visits per day <span class="h2sub">· Riyadh time, last 7 days</span></h2>
+    <div class="chart" id="chart"></div>
+  </div>
+
   <div class="foot">
-    Auto-refreshes every 60 s · raw data
+    Auto-refreshes every 90 s · loads progressively to respect the counter's rate limit · raw data
     <a href="https://abacus.jasoncameron.dev/get/icaire-promptle-2026/visits" target="_blank" rel="noopener">on abacus</a>
     · <span id="updated">loading…</span>
   </div>
@@ -189,7 +218,7 @@
 (function(){
   var NS = "icaire-promptle-2026";
   var BASE = "https://abacus.jasoncameron.dev/get/" + NS + "/";
-  var DAYS = 12;
+  var DAYS = 7;
 
   var $ = function(id){ return document.getElementById(id); };
   var fmt = function(n){ return (n || 0).toLocaleString("en-US"); };
@@ -202,7 +231,7 @@
   }
   function shortDate(iso){ var p = iso.split("-"); return p[2] + "/" + p[1]; }
 
-  var store = {};                    // last known good values
+  var store = {};
   var G = function(k){ return store[k] || 0; };
 
   function getKey(k){
@@ -215,41 +244,61 @@
     }).catch(function(){ return {ok:false}; });
   }
 
-  // small batches with a gap — abacus allows 30 req / 10 s per IP
-  function getMany(keys){
-    var i = 0, anyFail = false;
+  // progressive + rate-limit-friendly: 3 keys per ~1.4s (~21 req/10s). Values already in
+  // `store` survive a partial pass, so anything missed fills in on the next tick. Back off
+  // harder if a request actually fails (429).
+  function getMany(keys, onProgress){
+    var i = 0, missed = 0;
     function batch(){
-      var slice = keys.slice(i, i+4); i += 4;
+      var slice = keys.slice(i, i+3); i += 3;
+      var hitFail = false;
       return Promise.all(slice.map(function(k){
         return getKey(k).then(function(res){
-          if (res.ok) store[k] = res.value; else anyFail = true;
+          if (res.ok) store[k] = res.value; else { hitFail = true; missed++; }
         });
       })).then(function(){
-        return i < keys.length
-          ? new Promise(function(r){ setTimeout(r, 500); }).then(batch)
-          : { stale: anyFail };
+        onProgress(missed);
+        if (i >= keys.length) return { missed: missed };
+        return new Promise(function(r){ setTimeout(r, hitFail ? 4000 : 1400); }).then(batch);
       });
     }
     return batch();
   }
 
-  function setSplit(aId, bId, aNId, bNId, a, b){
+  function setSplit(aId,bId,aNId,bNId,a,b){
     var t = a + b;
-    $(aId).style.width = t ? (a / t * 100) + "%" : "0";
-    $(bId).style.width = t ? (b / t * 100) + "%" : "0";
-    $(aNId).textContent = fmt(a) + (t ? " (" + pct(a, t) + ")" : "");
-    $(bNId).textContent = fmt(b) + (t ? " (" + pct(b, t) + ")" : "");
+    $(aId).style.width = t ? (a/t*100)+"%" : "0";
+    $(bId).style.width = t ? (b/t*100)+"%" : "0";
+    $(aNId).textContent = fmt(a) + (t ? " ("+pct(a,t)+")" : "");
+    $(bNId).textContent = fmt(b) + (t ? " ("+pct(b,t)+")" : "");
   }
 
-  function render(meta){
+  function rateColor(r){ return r >= 0.75 ? "var(--good)" : r >= 0.5 ? "var(--warn)" : "var(--bad)"; }
+  function diffLabel(r){
+    if (r == null) return ["—", "var(--muted)"];
+    if (r >= 0.85) return ["Easy", "var(--good)"];
+    if (r >= 0.70) return ["Moderate", "var(--good)"];
+    if (r >= 0.55) return ["Challenging", "var(--warn)"];
+    return ["Hard", "var(--bad)"];
+  }
+
+  function render(missed){
     var visits = G("visits"), scans = G("total"), games = G("games");
-    var win = G("win"), loss = G("loss");
+    var win = G("win"), loss = G("loss"), done = win + loss;
 
     $("visits").textContent = fmt(visits);
     $("games").textContent = fmt(games);
     $("completion").textContent = pct(games, visits);
-    $("winrate").textContent = (win + loss) ? pct(win, win + loss) : "—";
+    $("winrate").textContent = done ? pct(win, done) : "—";
     $("winloss").textContent = fmt(win) + " / " + fmt(loss);
+    var dl = diffLabel(done ? win/done : null);
+    $("diffPill").textContent = dl[0];
+    $("diffPill").style.background = dl[1];
+
+    // avg guesses among solved games
+    var gsum = 0, gcount = 0;
+    for (var n = 1; n <= 6; n++){ var c = G("guess"+n); gsum += n*c; gcount += c; }
+    $("avgGuess").textContent = gcount ? (gsum/gcount).toFixed(1) : "—";
 
     $("scans").textContent = fmt(scans);
     $("scansPct").textContent = visits ? pct(scans, visits) + " of visits" : " ";
@@ -262,33 +311,36 @@
     $("hintsPct").textContent = games ? pct(G("hint"), games) + " of games" : " ";
     $("shares").textContent = fmt(G("share"));
 
-    // daily chart
-    var days = [];
-    for (var k = DAYS - 1; k >= 0; k--){
+    // difficulty by day
+    var body = $("diffBody"); body.innerHTML = "";
+    for (var k = 0; k < DAYS; k++){
       var iso = isoDay(k);
-      days.push({ iso: iso, n: store["vday-" + iso] || 0 });
+      var w = store["win-" + iso] || 0, l = store["loss-" + iso] || 0, t = w + l;
+      var tr = document.createElement("tr");
+      if (!t){
+        tr.className = "empty";
+        tr.innerHTML = "<td>" + shortDate(iso) + (k===0?" · today":"") + "</td><td class='num'>0</td><td class='num'>—</td><td class='num'>no plays yet</td>";
+      } else {
+        var r = w / t, col = rateColor(r);
+        tr.innerHTML =
+          "<td>" + shortDate(iso) + (k===0?" · today":"") + "</td>" +
+          "<td class='num'>" + t + "</td>" +
+          "<td class='num'>" + w + " / " + l + "</td>" +
+          "<td><div class='ratewrap'><div class='rtrack'><div class='rfill' style='width:" + Math.round(r*100) + "%;background:" + col + "'></div></div>" +
+          "<span class='rpct' style='color:" + col + "'>" + Math.round(r*100) + "%</span></div></td>";
+      }
+      body.appendChild(tr);
     }
-    var dmax = Math.max(1, Math.max.apply(null, days.map(function(x){ return x.n; })));
-    var chart = $("chart"); chart.innerHTML = "";
-    days.forEach(function(x, idx){
-      var b = document.createElement("div");
-      b.className = "bar" + (idx === days.length - 1 ? " today" : "");
-      b.innerHTML = '<span class="n">' + (x.n || "") + '</span>' +
-        '<div class="col" style="height:' + (x.n / dmax * 120) + 'px"></div>' +
-        '<span class="d">' + shortDate(x.iso) + '</span>';
-      chart.appendChild(b);
-    });
 
     // guess distribution
-    var gd = [1,2,3,4,5,6].map(function(n){ return { n:n, c:G("guess"+n) }; });
+    var gd = [1,2,3,4,5,6].map(function(x){ return { n:x, c:G("guess"+x) }; });
     var gmax = Math.max(1, Math.max.apply(null, gd.map(function(x){ return x.c; })));
     var dist = $("dist"); dist.innerHTML = "";
     gd.forEach(function(x){
-      var row = document.createElement("div");
-      row.className = "row";
-      row.innerHTML = '<b>' + x.n + '</b>' +
-        '<div class="track"><div class="fill" style="width:' + (x.c / gmax * 100) + '%"></div></div>' +
-        '<span>' + x.c + '</span>';
+      var row = document.createElement("div"); row.className = "row";
+      row.innerHTML = "<b>" + x.n + "</b>" +
+        "<div class='track'><div class='fill' style='width:" + (x.c/gmax*100) + "%'></div></div>" +
+        "<span>" + x.c + "</span>";
       dist.appendChild(row);
     });
 
@@ -296,13 +348,27 @@
     setSplit("thLight","thDark","thLightN","thDarkN", G("theme-light"), G("theme-dark"));
     setSplit("dvMob","dvDesk","dvMobN","dvDeskN", G("device-mobile"), G("device-desktop"));
 
-    var t = new Date().toLocaleTimeString();
-    $("updated").innerHTML = meta && meta.stale
-      ? '<span class="stale">partial data (rate-limited) · retries automatically · ' + t + '</span>'
-      : 'updated ' + t;
+    // visits chart
+    var days = [];
+    for (var j = DAYS - 1; j >= 0; j--){ var di = isoDay(j); days.push({ iso:di, n: store["vday-"+di] || 0 }); }
+    var dmax = Math.max(1, Math.max.apply(null, days.map(function(x){ return x.n; })));
+    var chart = $("chart"); chart.innerHTML = "";
+    days.forEach(function(x, idx){
+      var b = document.createElement("div");
+      b.className = "bar" + (idx === days.length-1 ? " today" : "");
+      b.innerHTML = "<span class='n'>" + (x.n||"") + "</span>" +
+        "<div class='col' style='height:" + (x.n/dmax*120) + "px'></div>" +
+        "<span class='d'>" + shortDate(x.iso) + "</span>";
+      chart.appendChild(b);
+    });
+
+    var t2 = new Date().toLocaleTimeString();
+    $("updated").innerHTML = missed
+      ? "<span class='stale'>syncing… some counters retry on the next cycle · " + t2 + "</span>"
+      : "updated " + t2;
   }
 
-  var KEYS = ["visits","total","games","win","loss","hint","share","newvisitor","returning",
+  var CORE = ["visits","total","games","win","loss","hint","share","newvisitor","returning",
               "lang-en","lang-ar","theme-light","theme-dark","device-mobile","device-desktop",
               "guess1","guess2","guess3","guess4","guess5","guess6"];
 
@@ -311,9 +377,10 @@
     if (busy) return;
     busy = true;
     $("refresh").querySelector("svg").classList.add("spin");
-    var keys = KEYS.slice();
-    for (var k = 0; k < DAYS; k++) keys.push("vday-" + isoDay(k));
-    getMany(keys).then(render).catch(function(){ render({ stale:true }); }).finally(function(){
+    var keys = CORE.slice();
+    for (var k = 0; k < DAYS; k++){ keys.push("win-"+isoDay(k), "loss-"+isoDay(k)); }
+    for (var v = 0; v < DAYS; v++){ keys.push("vday-"+isoDay(v)); }
+    getMany(keys, render).then(function(m){ render(m && m.missed); }).catch(function(){ render(1); }).finally(function(){
       busy = false;
       $("refresh").querySelector("svg").classList.remove("spin");
     });
@@ -321,7 +388,7 @@
 
   $("refresh").addEventListener("click", load);
   load();
-  setInterval(load, 60000);
+  setInterval(load, 90000);
 })();
 </script>
 </html>
