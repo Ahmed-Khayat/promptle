@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Promptle — Scan Analytics</title>
+<style>
+  :root{
+    --bg:#f4f7f5; --surface:#fff; --surface-2:#e9f0eb; --ink:#16242d; --ink-soft:#4a5a63;
+    --muted:#667079; --line:#e2e8e5; --accent:#1c5631; --bar:#1c5631;
+    --radius:16px; --shadow:0 20px 48px rgba(15,42,56,.10);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f2a38; --surface:#14384a; --surface-2:#1b425a; --ink:#fff; --ink-soft:#b7c4cb;
+      --muted:#8a99a1; --line:#24485c; --accent:#8dc63f; --bar:#8dc63f;
+      --shadow:0 20px 54px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f2a38; --surface:#14384a; --surface-2:#1b425a; --ink:#fff; --ink-soft:#b7c4cb;
+    --muted:#8a99a1; --line:#24485c; --accent:#8dc63f; --bar:#8dc63f;
+    --shadow:0 20px 54px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{background:var(--bg); color:var(--ink); min-height:100vh;
+    font-family:Calibri,Carlito,"Segoe UI",system-ui,-apple-system,sans-serif;
+    padding:28px 18px 56px;}
+  .wrap{max-width:820px; margin:0 auto;}
+
+  header{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:22px;}
+  h1{margin:0; font-size:22px; font-weight:800; letter-spacing:.01em;}
+  .sub{margin-top:3px; font-size:13px; color:var(--muted);}
+  .hbtn{border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    border-radius:999px; padding:8px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;
+    display:inline-flex; align-items:center; gap:7px;}
+  .hbtn:hover{background:var(--surface-2);}
+  .hbtn svg{width:13px; height:13px;}
+  .spin{animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .hero{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px 24px; box-shadow:var(--shadow); margin-bottom:16px;}
+  .hero .k{font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);}
+  .hero .big{font-size:56px; font-weight:800; line-height:1.05; margin-top:4px; letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;}
+  .hero .note{font-size:12.5px; color:var(--muted); margin-top:6px;}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:15px 16px;}
+  .card .k{font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);}
+  .card .v{font-size:28px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums;}
+  .card .p{font-size:12px; color:var(--muted); margin-top:1px;}
+
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px 20px; margin-bottom:16px;}
+  .panel h2{margin:0 0 4px; font-size:14px; font-weight:800; letter-spacing:.02em;}
+  .panel .h2sub{font-weight:400; color:var(--muted);}
+
+  .chart{display:flex; align-items:flex-end; gap:6px; height:180px; overflow-x:auto; padding-top:18px;}
+  .bar{flex:1 0 26px; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:26px;}
+  .bar .col{width:100%; max-width:34px; background:var(--bar); border-radius:6px 6px 2px 2px;
+    min-height:3px; transition:height .3s;}
+  .bar.today .col{outline:2px solid var(--accent); outline-offset:2px;}
+  .bar .n{font-size:11px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+  .bar .d{font-size:10px; color:var(--muted); white-space:nowrap;}
+  .bar.today .d{color:var(--accent); font-weight:700;}
+
+  .foot{font-size:12px; color:var(--muted); text-align:center; margin-top:8px;}
+  .foot a{color:var(--accent);}
+  .stale{color:#c98a1f;}
+  [hidden]{display:none!important;}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Promptle · Scan Analytics</h1>
+      <div class="sub">ICAIRE booth — opens of the “Scan to play” QR code</div>
+    </div>
+    <button class="hbtn" id="refresh" title="Refresh">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3.5H10"/></svg>
+      <span>Refresh</span>
+    </button>
+  </header>
+
+  <div class="hero">
+    <div class="k">Total scans</div>
+    <div class="big" id="total">—</div>
+    <div class="note">Every open of the tracked link, from either QR. Cumulative — the number only goes up.</div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="k">Today</div>
+      <div class="v" id="today">—</div>
+      <div class="p">Riyadh time · <span id="todayDate">—</span></div>
+    </div>
+    <div class="card">
+      <div class="k">Last 7 days</div>
+      <div class="v" id="week">—</div>
+      <div class="p">rolling total</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Scans per day <span class="h2sub">· Riyadh time, last 14 days</span></h2>
+    <div class="chart" id="chart"></div>
+  </div>
+
+  <div class="foot">
+    Auto-refreshes every 30 s · data from
+    <a href="https://abacus.jasoncameron.dev/get/promptle-icaire-live/total" target="_blank" rel="noopener">abacus</a>
+    · <span id="updated">loading…</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var NS = "promptle-icaire-live";
+  var BASE = "https://abacus.jasoncameron.dev/get/" + NS + "/";
+  var DAYS = 14;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return (n || 0).toLocaleString("en-US"); };
+
+  function riyadhNow(){ return new Date(Date.now() + 3*3600*1000); }
+  function isoDay(offset){
+    var d = riyadhNow(); d.setUTCDate(d.getUTCDate() - (offset || 0));
+    return d.toISOString().slice(0,10);
+  }
+  function shortDate(iso){ var p = iso.split("-"); return p[2] + "/" + p[1]; }
+
+  // last known good values, so a rate-limited refresh never blanks the page
+  var store = {};
+
+  // returns {ok:bool, value:number|undefined}
+  function getKey(k){
+    return fetch(BASE + k, {cache:"no-store"}).then(function(r){
+      if (r.status === 404) return {ok:true, value:0};        // key genuinely never hit
+      if (!r.ok) return {ok:false};                            // 429 / 5xx — unknown
+      return r.json().then(function(j){
+        return {ok:true, value:(j && typeof j.value === "number") ? j.value : 0};
+      });
+    }).catch(function(){ return {ok:false}; });
+  }
+
+  // fetch in batches of 6 with a gap, to stay under 30 req / 10 s
+  function getMany(keys){
+    var i = 0, anyFail = false;
+    function batch(){
+      var slice = keys.slice(i, i+6); i += 6;
+      return Promise.all(slice.map(function(k){
+        return getKey(k).then(function(res){
+          if (res.ok) store[k] = res.value; else anyFail = true;
+        });
+      })).then(function(){
+        return i < keys.length
+          ? new Promise(function(res){ setTimeout(res, 350); }).then(batch)
+          : { stale: anyFail };
+      });
+    }
+    return batch();
+  }
+
+  function render(meta){
+    var days = [];
+    for (var k = DAYS - 1; k >= 0; k--){
+      var iso = isoDay(k);
+      days.push({ iso: iso, n: store["day-" + iso] || 0 });
+    }
+    var todayN = store["day-" + isoDay(0)] || 0;
+    var weekN = 0; for (var w = 0; w < 7; w++) weekN += store["day-" + isoDay(w)] || 0;
+
+    $("total").textContent = fmt(store.total);
+    $("today").textContent = fmt(todayN);
+    $("week").textContent  = fmt(weekN);
+    $("todayDate").textContent = shortDate(isoDay(0));
+
+    var max = Math.max(1, Math.max.apply(null, days.map(function(x){ return x.n; })));
+    var chart = $("chart"); chart.innerHTML = "";
+    days.forEach(function(x, idx){
+      var b = document.createElement("div");
+      b.className = "bar" + (idx === days.length - 1 ? " today" : "");
+      b.innerHTML =
+        '<span class="n">' + (x.n || "") + '</span>' +
+        '<div class="col" style="height:' + (x.n / max * 120) + 'px"></div>' +
+        '<span class="d">' + shortDate(x.iso) + '</span>';
+      chart.appendChild(b);
+    });
+
+    var t = new Date().toLocaleTimeString();
+    $("updated").innerHTML = meta && meta.stale
+      ? '<span class="stale">partial data (rate-limited) · retried automatically · ' + t + '</span>'
+      : 'updated ' + t;
+  }
+
+  var busy = false;
+  function load(){
+    if (busy) return;
+    busy = true;
+    $("refresh").querySelector("svg").classList.add("spin");
+
+    var keys = ["total"];
+    for (var k = 0; k < DAYS; k++) keys.push("day-" + isoDay(k));
+
+    getMany(keys).then(render).catch(function(){
+      render({ stale: true });
+    }).finally(function(){
+      busy = false;
+      $("refresh").querySelector("svg").classList.remove("spin");
+    });
+  }
+
+  $("refresh").addEventListener("click", load);
+  load();
+  setInterval(load, 30000);
+})();
+</script>
+</html>

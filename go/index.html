@@ -23,20 +23,22 @@
 <script>
 (function () {
   var DEST = "https://ahmed-khayat.github.io/promptle/";
-  var NS = "promptle-icaire-booth";           // scan counter namespace (abacus.jasoncameron.dev)
+  var NS  = "promptle-icaire-live";           // scan-counter namespace (abacus.jasoncameron.dev)
   var API = "https://abacus.jasoncameron.dev/hit/" + NS + "/";
-  var p = new URLSearchParams(location.search);
-  var v = p.get("v");
-  var key = v === "d" ? "dark" : v === "l" ? "light" : "direct";
+
+  // one counter for every scan, whichever QR it came from.
+  // day bucket in Riyadh time (UTC+3) so the dashboard's daily chart lines up with the event.
+  var riyadh = new Date(Date.now() + 3 * 3600 * 1000);
+  var day = "day-" + riyadh.toISOString().slice(0, 10);
 
   var done = false;
   function go() { if (done) return; done = true; location.replace(DEST); }
-  setTimeout(go, 1500);                       // hard cap — never trap the visitor
+  setTimeout(go, 1500);                        // hard cap — never trap the visitor
 
   try {
-    var hits = [fetch(API + "total", { cache: "no-store", keepalive: true }),
-                fetch(API + key,     { cache: "no-store", keepalive: true })];
-    Promise.allSettled(hits).then(go, go);
+    Promise.allSettled(["total", day].map(function (k) {
+      return fetch(API + k, { cache: "no-store", keepalive: true });
+    })).then(go, go);
   } catch (e) { go(); }
 })();
 </script>
