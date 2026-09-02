@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Promptle — Scan Analytics</title>
+<title>Promptle — Analytics</title>
 <style>
   :root{
     --bg:#f4f7f5; --surface:#fff; --surface-2:#e9f0eb; --ink:#16242d; --ink-soft:#4a5a63;
@@ -47,7 +47,8 @@
     font-variant-numeric:tabular-nums;}
   .hero .note{font-size:12.5px; color:var(--muted); margin-top:6px;}
 
-  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px;}
+  @media (max-width:560px){ .grid{grid-template-columns:1fr 1fr;} }
   .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:15px 16px;}
   .card .k{font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);}
   .card .v{font-size:28px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums;}
@@ -76,8 +77,8 @@
 <div class="wrap">
   <header>
     <div>
-      <h1>Promptle · Scan Analytics</h1>
-      <div class="sub">ICAIRE booth — opens of the “Scan to play” QR code</div>
+      <h1>Promptle · Analytics</h1>
+      <div class="sub">ICAIRE booth</div>
     </div>
     <button class="hbtn" id="refresh" title="Refresh">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3.5H10"/></svg>
@@ -86,32 +87,37 @@
   </header>
 
   <div class="hero">
-    <div class="k">Total scans</div>
-    <div class="big" id="total">—</div>
-    <div class="note">Every open of the tracked link, from either QR. Cumulative — the number only goes up.</div>
+    <div class="k">Total visits</div>
+    <div class="big" id="visits">—</div>
+    <div class="note">Anyone who opened the game, counted once per device per day (Riyadh time). Cumulative.</div>
   </div>
 
   <div class="grid">
     <div class="card">
-      <div class="k">Today</div>
-      <div class="v" id="today">—</div>
-      <div class="p">Riyadh time · <span id="todayDate">—</span></div>
+      <div class="k">Via QR scan</div>
+      <div class="v" id="scans">—</div>
+      <div class="p" id="scansPct">&nbsp;</div>
     </div>
     <div class="card">
-      <div class="k">Last 7 days</div>
+      <div class="k">Visits today</div>
+      <div class="v" id="today">—</div>
+      <div class="p">Riyadh · <span id="todayDate">—</span></div>
+    </div>
+    <div class="card">
+      <div class="k">Visits · last 7 days</div>
       <div class="v" id="week">—</div>
       <div class="p">rolling total</div>
     </div>
   </div>
 
   <div class="panel">
-    <h2>Scans per day <span class="h2sub">· Riyadh time, last 14 days</span></h2>
+    <h2>Visits per day <span class="h2sub">· Riyadh time, last 14 days</span></h2>
     <div class="chart" id="chart"></div>
   </div>
 
   <div class="foot">
     Auto-refreshes every 30 s · data from
-    <a href="https://abacus.jasoncameron.dev/get/promptle-icaire-live/total" target="_blank" rel="noopener">abacus</a>
+    <a href="https://abacus.jasoncameron.dev/get/promptle-icaire-live/visits" target="_blank" rel="noopener">abacus</a>
     · <span id="updated">loading…</span>
   </div>
 </div>
@@ -135,18 +141,17 @@
   // last known good values, so a rate-limited refresh never blanks the page
   var store = {};
 
-  // returns {ok:bool, value:number|undefined}
   function getKey(k){
     return fetch(BASE + k, {cache:"no-store"}).then(function(r){
-      if (r.status === 404) return {ok:true, value:0};        // key genuinely never hit
-      if (!r.ok) return {ok:false};                            // 429 / 5xx — unknown
+      if (r.status === 404) return {ok:true, value:0};      // never hit yet
+      if (!r.ok) return {ok:false};                          // 429 / 5xx
       return r.json().then(function(j){
         return {ok:true, value:(j && typeof j.value === "number") ? j.value : 0};
       });
     }).catch(function(){ return {ok:false}; });
   }
 
-  // fetch in batches of 6 with a gap, to stay under 30 req / 10 s
+  // batches of 6 with a gap, to stay under abacus's 30 req / 10 s
   function getMany(keys){
     var i = 0, anyFail = false;
     function batch(){
@@ -168,12 +173,15 @@
     var days = [];
     for (var k = DAYS - 1; k >= 0; k--){
       var iso = isoDay(k);
-      days.push({ iso: iso, n: store["day-" + iso] || 0 });
+      days.push({ iso: iso, n: store["vday-" + iso] || 0 });
     }
-    var todayN = store["day-" + isoDay(0)] || 0;
-    var weekN = 0; for (var w = 0; w < 7; w++) weekN += store["day-" + isoDay(w)] || 0;
+    var todayN = store["vday-" + isoDay(0)] || 0;
+    var weekN = 0; for (var w = 0; w < 7; w++) weekN += store["vday-" + isoDay(w)] || 0;
 
-    $("total").textContent = fmt(store.total);
+    var visits = store.visits || 0, scans = store.total || 0;
+    $("visits").textContent = fmt(visits);
+    $("scans").textContent  = fmt(scans);
+    $("scansPct").textContent = visits ? Math.round(scans / visits * 100) + "% of visits" : " ";
     $("today").textContent = fmt(todayN);
     $("week").textContent  = fmt(weekN);
     $("todayDate").textContent = shortDate(isoDay(0));
@@ -192,7 +200,7 @@
 
     var t = new Date().toLocaleTimeString();
     $("updated").innerHTML = meta && meta.stale
-      ? '<span class="stale">partial data (rate-limited) · retried automatically · ' + t + '</span>'
+      ? '<span class="stale">partial data (rate-limited) · retries automatically · ' + t + '</span>'
       : 'updated ' + t;
   }
 
@@ -202,8 +210,8 @@
     busy = true;
     $("refresh").querySelector("svg").classList.add("spin");
 
-    var keys = ["total"];
-    for (var k = 0; k < DAYS; k++) keys.push("day-" + isoDay(k));
+    var keys = ["visits", "total"];
+    for (var k = 0; k < DAYS; k++) keys.push("vday-" + isoDay(k));
 
     getMany(keys).then(render).catch(function(){
       render({ stale: true });

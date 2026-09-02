@@ -1039,3 +1039,21 @@
   if (!helpSeen()) showHelp();   // first visit ever, in either mode — never again after that
 })();
 </script>
+
+<!-- ICAIRE booth analytics: one visit per browser per Riyadh-day, fire-and-forget.
+     The per-day guard stops the booth screen (which reloads all day) from inflating the
+     count, and keeps it closer to "visitors" than "page views". Scan traffic still also
+     goes through /go/, so /stats/ can show visits and QR scans side by side. -->
+<script>
+(function () {
+  try {
+    var NS = "promptle-icaire-live";
+    var day = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
+    if (localStorage.getItem("promptle_pv") === day) return;
+    localStorage.setItem("promptle_pv", day);
+    var API = "https://abacus.jasoncameron.dev/hit/" + NS + "/";
+    fetch(API + "visits",      { cache: "no-store", keepalive: true });
+    fetch(API + "vday-" + day, { cache: "no-store", keepalive: true });
+  } catch (e) {}
+})();
+</script>
