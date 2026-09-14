@@ -112,6 +112,14 @@
   .icon-btn:active { transform:scale(.94); }
   .icon-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   #langBtn { font-size:18px; }
+  .hint-wrap { position:relative; display:flex; }
+  .hint-count {
+    position:absolute; z-index:1; top:-8px; left:50%; transform:translateX(-50%);
+    min-width:17px; height:17px; padding:0 4px; border-radius:var(--radius-pill);
+    background:var(--present); color:var(--on-present); border:2px solid var(--bg);
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:800; line-height:1; pointer-events:none;
+  }
   .hint-btn { font-size:17px; animation:glow 2.1s ease-in-out infinite; }
   .hint-btn.spent { animation:none; opacity:.4; cursor:default; }
   @keyframes glow {
@@ -234,6 +242,36 @@
   @media (prefers-reduced-motion: reduce) {
     .tile.filled, .tile.reveal, .row.shake, .hint-btn { animation:none !important; }
   }
+
+  /* ---- booth QR rails ----
+     Fixed to the left/right gutters so booth visitors can scan the game onto their own
+     phone while it runs on the big screen. The QR points at /go/ (a redirect that counts
+     the scan, then forwards here). Two artworks — Forest-on-Canvas for light, Lime-on-
+     Midnight for dark — swapped by the SAME theme rule the rest of the UI uses. Hidden
+     below 1024px, where the gutters are too narrow to hold them without overlapping .wrap. */
+  .qr-rail { position:fixed; top:50%; transform:translateY(-50%); z-index:15;
+    display:none; flex-direction:column; align-items:center; gap:9px;
+    width:clamp(148px, 14vw, 196px); pointer-events:none; }
+  .qr-rail.left  { left:clamp(14px, 3vw, 52px); }
+  .qr-rail.right { right:clamp(14px, 3vw, 52px); }
+  .qr-rail a { display:block; width:100%; pointer-events:auto; border-radius:var(--radius-lg);
+    transition:transform .12s; }
+  .qr-rail a:hover { transform:translateY(-2px); }
+  .qr-rail a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+  .qr-rail img { width:100%; height:auto; display:block; border-radius:var(--radius-lg);
+    border:1px solid var(--line); }
+  .qr-rail .cap { font-family:var(--font-ui); font-size:12px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .qr-rail .qr-dark { display:none; }
+  @media (min-width: 1024px) { .qr-rail { display:flex; } }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .qr-rail .qr-light { display:none; }
+    :root:not([data-theme="light"]) .qr-rail .qr-dark  { display:block; }
+  }
+  :root[data-theme="dark"]  .qr-rail .qr-light { display:none; }
+  :root[data-theme="dark"]  .qr-rail .qr-dark  { display:block; }
+  :root[data-theme="light"] .qr-rail .qr-light { display:block; }
+  :root[data-theme="light"] .qr-rail .qr-dark  { display:none; }
 </style>
 
 <div class="wrap">
@@ -247,7 +285,10 @@
       <span class="sub" id="sub">Guess the AI term in 6 tries</span>
     </div>
     <div class="tools-r">
-      <button class="icon-btn hint-btn" id="hintBtn" title="Hint" aria-label="Hint">💡</button>
+      <div class="hint-wrap" id="hintWrap">
+        <span class="hint-count" id="hintCount" aria-live="polite">3</span>
+        <button class="icon-btn hint-btn" id="hintBtn" title="Hint" aria-label="Hint">💡</button>
+      </div>
       <button class="icon-btn" id="statsBtn" title="Show result" aria-label="Show result" style="display:none"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="currentColor"><rect x="1.5" y="8" width="3.4" height="6" rx="1.1"/><rect x="6.3" y="2" width="3.4" height="12" rx="1.1"/><rect x="11.1" y="5.5" width="3.4" height="8.5" rx="1.1"/></svg></button>
       <button class="icon-btn" id="themeBtn" title="Light / dark" aria-label="Theme">◐</button>
     </div>
@@ -283,6 +324,22 @@
   </div>
 </div>
 
+<!-- booth QR rails — scan to play on your phone (see .qr-rail styles above) -->
+<aside class="qr-rail left">
+  <a href="go/" aria-label="Open Promptle on your phone">
+    <img class="qr-light" src="assets/qr-light.png" alt="" width="196" height="196" loading="lazy">
+    <img class="qr-dark"  src="assets/qr-dark.png"  alt="" width="196" height="196" loading="lazy">
+  </a>
+  <span class="cap">Scan to play</span>
+</aside>
+<aside class="qr-rail right">
+  <a href="go/" aria-label="Open Promptle on your phone">
+    <img class="qr-light" src="assets/qr-light.png" alt="" width="196" height="196" loading="lazy">
+    <img class="qr-dark"  src="assets/qr-dark.png"  alt="" width="196" height="196" loading="lazy">
+  </a>
+  <span class="cap">Scan to play</span>
+</aside>
+
 <!-- how to play -->
 <div class="overlay" id="overlay">
   <div class="modal" id="modal">
@@ -291,6 +348,16 @@
     <button class="ok" id="okBtn">Got it</button>
   </div>
 </div>
+
+<!-- ICAIRE booth analytics helper: fire-and-forget integer bumps to abacus (no PII). -->
+<script>
+window.pBump = (function () {
+  var API = "https://abacus.jasoncameron.dev/hit/icaire-promptle-2026/";
+  return function (key) {
+    try { fetch(API + key, { cache: "no-store", keepalive: true }); } catch (e) {}
+  };
+})();
+</script>
 
 <script>
 (function () {
@@ -425,7 +492,7 @@
           { sw: "g", t: "Green = right letter, right spot." },
           { sw: "a", t: "Amber = in the word, wrong spot." },
           { sw: "n", t: "Grey = not in the word." },
-          { dot: true, t: "Tap 💡 once for a hint, ع to switch language, ? to see this again. Come back tomorrow for a new word." }
+          { dot: true, t: "Use up to 3 💡 hints per game, ع to switch language, ? to see this again. Come back tomorrow for a new word." }
         ],
         ok: "Got it"
       }
@@ -464,7 +531,7 @@
           { sw: "g", t: "أخضر = الحرف صحيح وفي مكانه الصحيح." },
           { sw: "a", t: "برتقالي = الحرف موجود لكن في مكان آخر." },
           { sw: "n", t: "رمادي = الحرف غير موجود في الكلمة." },
-          { dot: true, t: "اضغط 💡 مرة واحدة للتلميح، وEN لتغيير اللغة، و؟ لعرض هذه التعليمات. عُد غدًا لكلمة جديدة." }
+          { dot: true, t: "استخدم حتى 3 تلميحات 💡 في كل لعبة، وEN لتغيير اللغة، و؟ لعرض هذه التعليمات. عُد غدًا لكلمة جديدة." }
         ],
         ok: "فهمت"
       }
@@ -488,7 +555,8 @@
   function isValidGuess(g) { return B().dict.has(normWord(g)); }
 
   var ROWS = 6;
-  var answer = "", cols = 5, curRow = 0, grid = [], over = false, hintUsed = false;
+  var MAX_HINTS = 3;
+  var answer = "", cols = 5, curRow = 0, grid = [], over = false, hintsUsed = 0;
   var keyEls = {}, keyState = {};
 
   var board = document.getElementById("board");
@@ -499,6 +567,8 @@
   var defLabel = document.getElementById("defLabel");
   var subEl = document.getElementById("sub");
   var resultEl = document.getElementById("result");
+  var hintWrap = document.getElementById("hintWrap");
+  var hintCount = document.getElementById("hintCount");
   var hintBtn = document.getElementById("hintBtn");
   var statsBtn = document.getElementById("statsBtn");
   var learnBtn = document.getElementById("learnBtn");
@@ -634,6 +704,15 @@
     state.counted = true;
     var s = loadStats(), d = dayNumber();
     if (s.last === d) { saveState(); return; }   // belt & braces: never count a day twice
+    try {
+      var gc = state.guesses.length;
+      var dstr = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
+      pBump("games");
+      pBump(won ? "win" : "loss");
+      pBump((won ? "win-" : "loss-") + dstr);   // per-day solve rate = word difficulty
+      if (won && gc >= 1 && gc <= 6) pBump("guess" + gc);
+      pBump("lang-" + lang);
+    } catch (e) {}
     s.played++;
     if (won) {
       s.streak = (s.last === d - 1) ? s.streak + 1 : 1;
@@ -662,28 +741,47 @@
     return (keys.length > 1 && k === answer) ? pickAnswer(keys) : k;   // no immediate repeat
   }
 
+  function updateHintUI() {
+    var remaining = Math.max(0, MAX_HINTS - hintsUsed);
+    hintCount.textContent = remaining;
+    hintCount.style.display = remaining ? "flex" : "none";
+    hintBtn.classList.toggle("spent", remaining === 0);
+    hintBtn.disabled = remaining === 0;
+  }
+
+  function restoreHints() {
+    // Older saved games have a single `hint`; turn that into the new list format.
+    var saved = Array.isArray(state.hints) ? state.hints : (state.hint ? [state.hint] : []);
+    state.hints = [];
+    saved.forEach(function (letter) {
+      letter = normChar(letter);
+      if (letter && state.hints.indexOf(letter) === -1 && state.hints.length < MAX_HINTS) state.hints.push(letter);
+    });
+    state.hints.forEach(function (letter) { updateKey(letter, "present"); });
+    hintsUsed = state.hints.length;
+    updateHintUI();
+  }
+
   function loadDay() {
     var w = WORDS();
     var keys = Object.keys(w).sort();
     answer = pickAnswer(keys);
     cols = answer.length;
-    curRow = 0; over = false; hintUsed = false; keyState = {};
+    curRow = 0; over = false; hintsUsed = 0; keyState = {};
     buildBoard();
     Object.keys(keyEls).forEach(function (k) { keyEls[k].className = "key"; });
     clueEl.textContent = censorClue(w[answer].def, answer);
     lenBadge.textContent = B().ui.len(cols);
     resultEl.className = "result";
-    hintBtn.classList.remove("spent"); hintBtn.disabled = false;
-    hintBtn.style.display = ""; statsBtn.style.display = "none";
+    hintWrap.style.display = ""; statsBtn.style.display = "none";
     resetCardBtns();
     setMsg("");
     // restore today's progress for this language (practice always starts clean)
-    state = (practice ? null : loadState()) || { guesses: [], done: false, won: false, counted: false, hint: null };
+    state = (practice ? null : loadState()) || { guesses: [], done: false, won: false, counted: false, hints: [] };
     state.guesses.forEach(function (g) { replayGuess(g); });
-    // A hint proves only that a letter appears somewhere in the answer — it does not reveal
-    // its position. Restore it as present/yellow; a later real guess can still upgrade it green.
-    if (state.hint) { updateKey(state.hint, "present"); hintUsed = true; hintBtn.classList.add("spent"); hintBtn.disabled = true; }
-    if (state.done) { over = true; hintBtn.classList.add("spent"); hintBtn.disabled = true; finish(state.won); }
+    // Hint letters persist with the game, so refreshing never refunds or duplicates a hint.
+    restoreHints();
+    if (state.done) { over = true; finish(state.won); }
   }
 
   function replayGuess(guess) {
@@ -778,7 +876,7 @@
     resetCardBtns();
     showResult();
     // the hint is dead weight once the puzzle is over — give the slot to the result toggle
-    hintBtn.style.display = "none"; statsBtn.style.display = "flex";
+    hintWrap.style.display = "none"; statsBtn.style.display = "flex";
     setMsg("");
   }
 
@@ -797,6 +895,7 @@
   var CHECK_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4 6.4 11.8 13 4.6"/></svg>';
 
   function shareGame() {
+    try { pBump("share"); } catch (e) {}
     var ui = B().ui, body = ui.shareBlurb + "\n" + SHARE_URL;
     if (navigator.share) {
       try {
@@ -914,7 +1013,7 @@
   }
 
   hintBtn.addEventListener("click", function () {
-    if (over || hintUsed) return;
+    if (over || hintsUsed >= MAX_HINTS) return;
     // Only ever reveal a letter the player has NOT already discovered. Picking at random
     // from the whole answer could land on a letter already lit green or amber on the
     // keyboard, burning the one-shot hint on information they already had.
@@ -925,12 +1024,15 @@
     }
     if (!unknown.length) { setMsg(B().ui.hintNone, true); return; }   // don't spend the hint
     var pick = unknown[Math.floor(Math.random() * unknown.length)];
-    // Yellow means "the letter is in the word"; green is reserved for a confirmed position.
     updateKey(pick, "present");
-    // persist WHICH letter, not just that a hint was taken: on reload the letter has to be
-    // re-lit, otherwise a refresh would cost the player the hint and the information both
-    state.hint = pick; saveState();
-    hintUsed = true; hintBtn.classList.add("spent"); hintBtn.disabled = true;
+    // Persist every revealed letter: a refresh cannot refund or duplicate any hint.
+    if (!Array.isArray(state.hints)) state.hints = state.hint ? [state.hint] : [];
+    state.hints.push(pick);
+    state.hint = null; // migrate saved games from the former one-hint field
+    hintsUsed = state.hints.length;
+    saveState();
+    try { pBump("hint"); } catch (e) {}
+    updateHintUI();
     setMsg(B().ui.hint, true);
   });
   document.getElementById("rClose").addEventListener("click", hideResult);
@@ -993,5 +1095,31 @@
   loadDay();
   postLang();
   if (!helpSeen()) showHelp();   // first visit ever, in either mode — never again after that
+})();
+</script>
+
+<!-- ICAIRE booth analytics: one visit per browser per Riyadh-day, fire-and-forget.
+     The per-day guard stops the booth screen (which reloads all day) from inflating the
+     count, and keeps it closer to "visitors" than "page views". theme/device/returning are
+     piggy-backed on the same guard so they sum to ~visits. Scan traffic also goes through
+     /go/, so /stats/ can show visits and QR scans side by side. No PII — integers only. -->
+<script>
+(function () {
+  try {
+    var day = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
+    if (localStorage.getItem("promptle_pv") === day) return;
+    var known = !!(localStorage.getItem("promptle.stats.en") ||
+                   localStorage.getItem("promptle.stats.ar") ||
+                   localStorage.getItem("promptle_pv"));
+    localStorage.setItem("promptle_pv", day);
+    var b = window.pBump || function () {};
+    b("visits");
+    b("vday-" + day);
+    b(known ? "returning" : "newvisitor");
+    var attr = document.documentElement.getAttribute("data-theme");
+    var dark = attr ? attr === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    b(dark ? "theme-dark" : "theme-light");
+    b(matchMedia("(max-width: 768px)").matches ? "device-mobile" : "device-desktop");
+  } catch (e) {}
 })();
 </script>
