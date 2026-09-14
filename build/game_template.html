@@ -234,36 +234,6 @@
   @media (prefers-reduced-motion: reduce) {
     .tile.filled, .tile.reveal, .row.shake, .hint-btn { animation:none !important; }
   }
-
-  /* ---- booth QR rails ----
-     Fixed to the left/right gutters so booth visitors can scan the game onto their own
-     phone while it runs on the big screen. The QR points at /go/ (a redirect that counts
-     the scan, then forwards here). Two artworks — Forest-on-Canvas for light, Lime-on-
-     Midnight for dark — swapped by the SAME theme rule the rest of the UI uses. Hidden
-     below 1024px, where the gutters are too narrow to hold them without overlapping .wrap. */
-  .qr-rail { position:fixed; top:50%; transform:translateY(-50%); z-index:15;
-    display:none; flex-direction:column; align-items:center; gap:9px;
-    width:clamp(148px, 14vw, 196px); pointer-events:none; }
-  .qr-rail.left  { left:clamp(14px, 3vw, 52px); }
-  .qr-rail.right { right:clamp(14px, 3vw, 52px); }
-  .qr-rail a { display:block; width:100%; pointer-events:auto; border-radius:var(--radius-lg);
-    transition:transform .12s; }
-  .qr-rail a:hover { transform:translateY(-2px); }
-  .qr-rail a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
-  .qr-rail img { width:100%; height:auto; display:block; border-radius:var(--radius-lg);
-    border:1px solid var(--line); }
-  .qr-rail .cap { font-family:var(--font-ui); font-size:12px; font-weight:700;
-    letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-  .qr-rail .qr-dark { display:none; }
-  @media (min-width: 1024px) { .qr-rail { display:flex; } }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .qr-rail .qr-light { display:none; }
-    :root:not([data-theme="light"]) .qr-rail .qr-dark  { display:block; }
-  }
-  :root[data-theme="dark"]  .qr-rail .qr-light { display:none; }
-  :root[data-theme="dark"]  .qr-rail .qr-dark  { display:block; }
-  :root[data-theme="light"] .qr-rail .qr-light { display:block; }
-  :root[data-theme="light"] .qr-rail .qr-dark  { display:none; }
 </style>
 
 <div class="wrap">
@@ -313,22 +283,6 @@
   </div>
 </div>
 
-<!-- booth QR rails — scan to play on your phone (see .qr-rail styles above) -->
-<aside class="qr-rail left">
-  <a href="go/" aria-label="Open Promptle on your phone">
-    <img class="qr-light" src="assets/qr-light.png" alt="" width="196" height="196" loading="lazy">
-    <img class="qr-dark"  src="assets/qr-dark.png"  alt="" width="196" height="196" loading="lazy">
-  </a>
-  <span class="cap">Scan to play</span>
-</aside>
-<aside class="qr-rail right">
-  <a href="go/" aria-label="Open Promptle on your phone">
-    <img class="qr-light" src="assets/qr-light.png" alt="" width="196" height="196" loading="lazy">
-    <img class="qr-dark"  src="assets/qr-dark.png"  alt="" width="196" height="196" loading="lazy">
-  </a>
-  <span class="cap">Scan to play</span>
-</aside>
-
 <!-- how to play -->
 <div class="overlay" id="overlay">
   <div class="modal" id="modal">
@@ -337,16 +291,6 @@
     <button class="ok" id="okBtn">Got it</button>
   </div>
 </div>
-
-<!-- ICAIRE booth analytics helper: fire-and-forget integer bumps to abacus (no PII). -->
-<script>
-window.pBump = (function () {
-  var API = "https://abacus.jasoncameron.dev/hit/icaire-promptle-2026/";
-  return function (key) {
-    try { fetch(API + key, { cache: "no-store", keepalive: true }); } catch (e) {}
-  };
-})();
-</script>
 
 <script>
 (function () {
@@ -603,15 +547,6 @@ __AR_WORDS__
     state.counted = true;
     var s = loadStats(), d = dayNumber();
     if (s.last === d) { saveState(); return; }   // belt & braces: never count a day twice
-    try {
-      var gc = state.guesses.length;
-      var dstr = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
-      pBump("games");
-      pBump(won ? "win" : "loss");
-      pBump((won ? "win-" : "loss-") + dstr);   // per-day solve rate = word difficulty
-      if (won && gc >= 1 && gc <= 6) pBump("guess" + gc);
-      pBump("lang-" + lang);
-    } catch (e) {}
     s.played++;
     if (won) {
       s.streak = (s.last === d - 1) ? s.streak + 1 : 1;
@@ -658,8 +593,9 @@ __AR_WORDS__
     // restore today's progress for this language (practice always starts clean)
     state = (practice ? null : loadState()) || { guesses: [], done: false, won: false, counted: false, hint: null };
     state.guesses.forEach(function (g) { replayGuess(g); });
-    // one hint per game, not per page load — restore the revealed letter and keep it spent
-    if (state.hint) { updateKey(state.hint, "correct"); hintUsed = true; hintBtn.classList.add("spent"); hintBtn.disabled = true; }
+    // A hint proves only that a letter appears somewhere in the answer — it does not reveal
+    // its position. Restore it as present/yellow; a later real guess can still upgrade it green.
+    if (state.hint) { updateKey(state.hint, "present"); hintUsed = true; hintBtn.classList.add("spent"); hintBtn.disabled = true; }
     if (state.done) { over = true; hintBtn.classList.add("spent"); hintBtn.disabled = true; finish(state.won); }
   }
 
@@ -774,7 +710,6 @@ __AR_WORDS__
   var CHECK_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4 6.4 11.8 13 4.6"/></svg>';
 
   function shareGame() {
-    try { pBump("share"); } catch (e) {}
     var ui = B().ui, body = ui.shareBlurb + "\n" + SHARE_URL;
     if (navigator.share) {
       try {
@@ -903,11 +838,11 @@ __AR_WORDS__
     }
     if (!unknown.length) { setMsg(B().ui.hintNone, true); return; }   // don't spend the hint
     var pick = unknown[Math.floor(Math.random() * unknown.length)];
-    updateKey(pick, "correct");
+    // Yellow means "the letter is in the word"; green is reserved for a confirmed position.
+    updateKey(pick, "present");
     // persist WHICH letter, not just that a hint was taken: on reload the letter has to be
     // re-lit, otherwise a refresh would cost the player the hint and the information both
     state.hint = pick; saveState();
-    try { pBump("hint"); } catch (e) {}
     hintUsed = true; hintBtn.classList.add("spent"); hintBtn.disabled = true;
     setMsg(B().ui.hint, true);
   });
@@ -971,31 +906,5 @@ __AR_WORDS__
   loadDay();
   postLang();
   if (!helpSeen()) showHelp();   // first visit ever, in either mode — never again after that
-})();
-</script>
-
-<!-- ICAIRE booth analytics: one visit per browser per Riyadh-day, fire-and-forget.
-     The per-day guard stops the booth screen (which reloads all day) from inflating the
-     count, and keeps it closer to "visitors" than "page views". theme/device/returning are
-     piggy-backed on the same guard so they sum to ~visits. Scan traffic also goes through
-     /go/, so /stats/ can show visits and QR scans side by side. No PII — integers only. -->
-<script>
-(function () {
-  try {
-    var day = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
-    if (localStorage.getItem("promptle_pv") === day) return;
-    var known = !!(localStorage.getItem("promptle.stats.en") ||
-                   localStorage.getItem("promptle.stats.ar") ||
-                   localStorage.getItem("promptle_pv"));
-    localStorage.setItem("promptle_pv", day);
-    var b = window.pBump || function () {};
-    b("visits");
-    b("vday-" + day);
-    b(known ? "returning" : "newvisitor");
-    var attr = document.documentElement.getAttribute("data-theme");
-    var dark = attr ? attr === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-    b(dark ? "theme-dark" : "theme-light");
-    b(matchMedia("(max-width: 768px)").matches ? "device-mobile" : "device-desktop");
-  } catch (e) {}
 })();
 </script>
