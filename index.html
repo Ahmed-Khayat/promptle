@@ -74,6 +74,10 @@
   html[lang="ar"] { --font-ui: var(--font-arabic); }
 
   * { box-sizing:border-box; }
+  /* Safari needs this in addition to the viewport lock: it suppresses the
+     double-tap-to-zoom gesture on the individual controls without swallowing
+     a legitimate quick second key press (for example, the two Ts in a word). */
+  button { touch-action:manipulation; }
   html, body { margin:0; height:100%; }
   body {
     background:var(--bg); color:var(--ink);
@@ -1070,6 +1074,12 @@ window.pBump = (function () {
     if (overlay.classList.contains("show")) { if (e.key === "Escape" || e.key === "Enter") hideHelp(); return; }
     if (e.key === "Escape" && resultEl.classList.contains("show")) { hideResult(); return; }
     if (e.key === "Enter" || e.key === "Backspace" || acceptChar(e.key)) { e.preventDefault(); handleKey(e.key); }
+  });
+
+  // Legacy Safari can still emit these gesture events despite the viewport lock.
+  // Blocking them keeps the game fixed at its intended size on iPhone.
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (eventName) {
+    document.addEventListener(eventName, function (e) { e.preventDefault(); }, { passive: false });
   });
 
   function applyTileSize() {
