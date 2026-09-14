@@ -602,6 +602,25 @@ __AR_WORDS__
   function saveState() { if (practice) return; try { localStorage.setItem(storeKey(), JSON.stringify(state)); } catch (e) {} }
   var state = { guesses: [], done: false, won: false, counted: false };
 
+  // Practice words that a player has solved stay out of the random pool for 24 hours.
+  // The history is language-specific, so English and Arabic practice runs remain independent.
+  var PRACTICE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+  function solvedCooldownKey() { return "promptle.solved-cooldown." + lang; }
+  function loadSolvedCooldowns() {
+    var saved = {}, now = Date.now();
+    try { saved = JSON.parse(localStorage.getItem(solvedCooldownKey())) || {}; } catch (e) {}
+    if (!saved || typeof saved !== "object") saved = {};
+    Object.keys(saved).forEach(function (word) {
+      if (typeof saved[word] !== "number" || now - saved[word] >= PRACTICE_COOLDOWN_MS) delete saved[word];
+    });
+    return saved;
+  }
+  function rememberSolvedWord(word) {
+    var saved = loadSolvedCooldowns();
+    saved[word] = Date.now();
+    try { localStorage.setItem(solvedCooldownKey(), JSON.stringify(saved)); } catch (e) {}
+  }
+
   // ---- lifetime stats, kept per language (the two puzzles are independent) ----
   function statsKey() { return "promptle.stats." + lang; }
   function loadStats() {
@@ -616,6 +635,7 @@ __AR_WORDS__
   // Called once, at the moment a puzzle is completed. state.counted is persisted with the
   // day's state, so reloading a finished puzzle re-shows the card without re-counting it.
   function recordResult(won) {
+    if (won) rememberSolvedWord(answer);
     if (practice) return;          // benchmarking must not inflate played / streak
     if (state.counted) return;
     state.counted = true;
@@ -654,8 +674,13 @@ __AR_WORDS__
 
   function pickAnswer(keys) {
     if (!practice) return keys[dayNumber() % keys.length];   // same word for everyone, once per day
-    var k = keys[Math.floor(Math.random() * keys.length)];
-    return (keys.length > 1 && k === answer) ? pickAnswer(keys) : k;   // no immediate repeat
+    var recent = loadSolvedCooldowns(), now = Date.now();
+    var available = keys.filter(function (key) { return !recent[key] || now - recent[key] >= PRACTICE_COOLDOWN_MS; });
+    // A very small bank can eventually be exhausted. In that case preserve the old
+    // no-immediate-repeat guarantee rather than leaving the player without a puzzle.
+    if (!available.length) available = keys.filter(function (key) { return key !== answer; });
+    if (!available.length) available = keys;
+    return available[Math.floor(Math.random() * available.length)];
   }
 
   function updateHintUI() {
