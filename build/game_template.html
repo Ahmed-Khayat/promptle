@@ -1005,6 +1005,21 @@ __AR_WORDS__
     document.addEventListener(eventName, function (e) { e.preventDefault(); }, { passive: false });
   });
 
+  // Some iOS Safari builds ignore touch-action for double-tap zoom. Cancel the
+  // second tap before Safari can turn it into a page gesture, and reject every
+  // multi-touch sequence as an extra pinch-zoom fallback.
+  var lastTouchEnd = 0;
+  document.addEventListener("touchend", function (e) {
+    var now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false, capture: true });
+  ["touchstart", "touchmove"].forEach(function (eventName) {
+    document.addEventListener(eventName, function (e) {
+      if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false, capture: true });
+  });
+
   function applyTileSize() {
     var size = tileSize(), fs = Math.round(size * 0.46);
     grid.forEach(function (row) { row.cells.forEach(function (c) { c.style.width = size + "px"; c.style.height = size + "px"; c.style.fontSize = fs + "px"; }); });
