@@ -1,4 +1,4 @@
-# How Promptle works
+# How Glossle works
 
 ## Two stages
 

@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Promptle — ICAIRE AI Glossary Game</title>
+<title>Glossle — ICAIRE AI Glossary Game</title>
 <!-- Almarai is ICAIRE's Arabic face (they load it via next/font/google). Latin needs no
      webfont — their stack is Calibri/Carlito/Segoe UI, all system fonts. If this request is
      blocked (offline, file://, or a strict CSP) the stack below falls back cleanly. -->
@@ -459,7 +459,7 @@
       <button class="icon-btn" id="helpBtn" title="How to play" aria-label="How to play">?</button>
     </div>
     <div class="title-wrap">
-      <h1 id="title">Promptle</h1>
+      <h1 id="title">Glossle</h1>
       <span class="sub" id="sub">Guess the AI term in 6 tries</span>
     </div>
     <div class="tools-r">
@@ -679,7 +679,7 @@ window.pBump = (function () {
         ["Z","X","C","V","B","N","M"]
       ],
       ui: {
-        name: "Promptle",
+        name: "Glossle",
         sub: function (rows) { return "Guess the AI term in " + rows + " tries"; },
         diffLabels: { easy: "EASY", medium: "MEDIUM", hard: "HARD" },
         tryTier: function (label) { return "Try " + label.charAt(0) + label.slice(1).toLowerCase(); },
@@ -694,8 +694,8 @@ window.pBump = (function () {
         toggle: "ع",
         learn: "Read the full glossary entry →",
         next: "Next word ↻", keep: "Play more words ↻", practice: "PRACTICE",
-        shareTitle: "Promptle — the daily AI glossary game",
-        shareBlurb: "Promptle — guess the hidden AI term. A daily bilingual word game built on the ICAIRE AI Glossary.",
+        shareTitle: "Glossle — the daily AI glossary game",
+        shareBlurb: "Glossle — guess the hidden AI term. A daily bilingual word game built on the ICAIRE AI Glossary.",
         stats: { played: "Played", win: "Win %", streak: "Streak", max: "Max" },
         deleteLabel: "DELETE", enterLabel: "ENTER",
         passportKicker: "YOUR PASSPORT", passportTitle: "Terms you've learned",
@@ -705,7 +705,7 @@ window.pBump = (function () {
         tutorial: {
           steps: [
             { kicker: "WHAT IS THIS?", title: "A daily AI word game",
-              body: function (rows) { return "Promptle hides a term from the ICAIRE AI glossary. You get " + rows + " tries — type a real word of the right length, then press ENTER to guess."; } },
+              body: function (rows) { return "Glossle hides a term from the ICAIRE AI glossary. You get " + rows + " tries — type a real word of the right length, then press ENTER to guess."; } },
             { kicker: "READ THE COLORS", title: "Colors show how close you are",
               example: { word: "MODEL", pattern: ["correct", "absent", "present", "absent", "correct"] },
               legend: [
@@ -1656,11 +1656,11 @@ window.pBump = (function () {
   rShare.addEventListener("click", shareGame);
 
   // tell the embedding page (the ICAIRE drawer demo) which language is showing,
-  // so its pull-tab can read PROMPTLE / خمِّن to match
+  // so its pull-tab can read GLOSSLE / خمِّن to match
   function postLang() {
     try {
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: "promptle-lang", lang: lang, name: B().ui.name }, "*");
+        window.parent.postMessage({ type: "glossle-lang", lang: lang, name: B().ui.name }, "*");
       }
     } catch (e) {}
   }

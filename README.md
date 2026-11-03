@@ -1,6 +1,6 @@
-# Promptle · خمِّن
+# Glossle · خمِّن
 
-A bilingual, Wordle-style daily word game built on the **ICAIRE AI Glossary**. Guess the hidden
+A bilingual, Wordle-style daily word game (formerly Promptle) built on the **ICAIRE AI Glossary**. Guess the hidden
 AI term; each guess must be a real word of the shown length; coloured tiles give feedback. When
 you solve it, you get the term's definition and its equivalent in the other language — the point
 is that you learn something.
