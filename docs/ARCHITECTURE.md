@@ -31,8 +31,12 @@ function dayNumber() {
   var today = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
   return Math.floor((today - Date.UTC(2026, 0, 1)) / 86400000);
 }
-answer = sortedKeys[ dayNumber() % keys.length ];
+answer = tierPool(sortedKeys)[ dayNumber() % pool.length ];
 ```
+
+`tierPool` narrows the sorted bank to the curated list for the active difficulty (`poolFor`), so
+Easy, Medium and Hard each have their own word for the day. If a curated list ever drifts from
+the bank it falls back to the whole bank rather than breaking.
 
 Two details that matter:
 
@@ -44,7 +48,7 @@ Two details that matter:
 ## The lock is a key, not a timer
 
 The word is *derived*; the lock is *memory*. Guesses are saved under a key like
-`promptle.2026-7-25.en`. Tomorrow the key changes, so yesterday's finished game is simply never
+`promptle.2026-7-25.en.medium`. Tomorrow the key changes, so yesterday's finished game is simply never
 looked up again — which is why the lock expires at local midnight with no countdown anywhere.
 
 On load, saved guesses are replayed and re-scored without animation, restoring the board.
@@ -82,12 +86,20 @@ var RANK = { absent: 0, present: 1, correct: 2 };
 if (prev && RANK[prev] >= RANK[state]) return;
 ```
 
-`keyState` is also the record of what the player has discovered, which is what makes the hint
-honest: it filters the answer's letters down to those with no `keyState` entry and picks only from
-those. If every letter is already known it says so and does **not** spend the hint.
+Hints are board positions, not letters. `pickHintIndex()` chooses a column that is neither already
+revealed nor already green in a previous guess (`knownCorrectIndices()`), and `refreshGhosts()`
+draws that letter as a green "ghost" on every empty cell of the active row. A ghost never locks the
+cell: the player can still type any word over it. If every column is known the hint says so and is
+not spent.
 
-The hint persists as `state.hint` — the actual letter, not a boolean. Storing only a flag would be
-worse than not persisting at all: on reload you'd lose the hint *and* the information it gave you.
+Revealed columns persist as `state.hints` (paid), `state.freeHint` (Medium's free one after two
+misses) and `state.progressive` (Easy: two at the start, one more after every miss), so a reload
+restores the ghosts and the information they gave.
+
+Stats live under one key per language, `promptle.stats.<lang>`, shared by the three tiers — the
+same key the single-tier game used, so no migration. `recordResult()` counts the first tier finished
+each day; `before` and `lastWon` are kept so a later win on another tier can upgrade a same-day loss
+without counting the day twice.
 
 ## Arabic
 

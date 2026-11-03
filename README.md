@@ -14,13 +14,22 @@ is that you learn something.
 
 ## How it plays
 
-- **One puzzle a day.** The word is derived from the date, so everyone sees the same one. Solve
-  or fail and it locks until local midnight.
+- **Three puzzles a day: Easy, Medium and Hard.** Each tier has its own word pool and its own
+  date-derived word, so everyone on the same tier sees the same one. Solve or fail and that tier
+  locks until local midnight. The tier is switched from the pill in the header.
 - **Any real word is a valid guess**, not just AI terms — that's what makes it feel like Wordle.
   The glossary term is only ever the hidden answer.
+- **Hints show on the board.** A hint draws the letter, in green, in its correct position on the
+  row you are typing. It never reveals a letter you already have green. Easy starts with two
+  letters shown and adds one after every miss; Medium has 3 hints; Hard has 1.
+- **Easy and Medium have no fail state** — running out of rows simply shows the word. Hard keeps
+  the real "Out of tries".
+- **Stats are one record per language**, shared by the tiers: the first tier finished each day
+  counts, and a later win on another tier upgrades a same-day loss.
 - **Practice mode** frees the daily lock: add `?practice=1` to the URL, or press
   *Play more words* on the result card. It never touches your saved stats or the daily word.
-- **One hint per game**, and it only ever reveals a letter you haven't already discovered.
+- **Passport**: every term you reach the end of (solved or shown) is kept, with its definition and
+  tier, under the menu.
 - Arabic is forgiving about spelling — أ/ا, ة/ه and ى/ي are treated as the same letter — and uses
   the standard **Arabic 101** PC keyboard layout.
 
